@@ -1,1 +1,37 @@
-test blabla
+/*
+*ADC
+*/
+
+int* adcInputDataWord = (int*)malloc(4*sizeof(byte));
+int* dacInputDataWord = (int*)malloc(4*24);
+#define dacSelectIntRef 0b011011110000000000000000
+
+int setupADC() {
+  //    MUX ADRESS   ||||   INPUT RANGE   ||POWER DOWN SELECTION||
+  // sgl/diff|odd sign | select||uni|gain |   NAP   |   SLEEP   |
+  adcInputDataWord[0] = 0b00000100; 	
+	adcInputDataWord[1] = 0b00010100; 	
+	adcInputDataWord[2] = 0b00100100;  
+	adcInputDataWord[3] = 0b00110100; 
+}
+
+int adcRead(int channel) {
+}
+
+int setupDAC() {
+  //COMMAND CODES||||ADRES CODE||||DATA + 4 DONT CARE BITS||||||||||||||||
+  dacInputDataWord[0] = 0b00110000; 	
+	dacInputDataWord[1] = 0b00110001; 	
+	dacInputDataWord[2] = 0b00110010;  
+	dacInputDataWord[3] = 0b00110011;
+}
+
+int sendDAC(int channel, int value) {
+}
+
+int setupDigiPot() {
+
+}
+
+int setDigiPot(int value) {
+}
