@@ -5,10 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-int* start_up();
+int* start_up_chipSelect();
 
-void shut_down(int*);
+int* start_up_switch();
+
+void shut_down(int*, int*);
 
 int set_up_channel(int, int*);
 
-
+int* spi_communication(int, int*, int);
