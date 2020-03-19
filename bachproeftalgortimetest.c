@@ -99,13 +99,13 @@ bool locate_base(int* pinList, BJT* transistor){						//bepaalt of de transistor
 }
 
 
-int stroom_door_pin(int pin){							//geeft false terug wanneer geen stroom doorheen de potentiometer loopt
+int stroom_door_pin(int pin){							
 	int stroom = 0;
 	
 	return stroom;
 }
 
-void locate_collector_Emitter(){ //returnt de pinnen waarmee de collector en emitter van de BJT verbonden zijn.
+void locate_collector_Emitter(){ 
 	
 }
 
