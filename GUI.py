@@ -86,19 +86,3 @@ class GraphPage(tk.Frame):
 
 app = Transistortester()
 app.mainloop()
-
-
-"""
-root = tk.Tk()
-
-canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH)
-canvas.pack()
-
-frame = tk.Frame(root, bg="#80c1ff")
-frame.place(relx=0.1, rely=0.1, relwidth=0.8, relheight=0.8)
-
-start = tk.Button(frame, text="Start")
-start.place(relx=0.7, rely=0.8, relwidth=0.2, relheight=0.1)
-
-root.mainloop()
-"""
