@@ -2,6 +2,7 @@ from tkinter import ttk
 import tkinter as tk
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import matplotlib.pyplot as plt
 import matplotlib
 
 LARGE_FONT = ("Verdana", 20)
@@ -54,6 +55,21 @@ class StartPage(tk.Frame):
         bHelp.place(relx=0.4, rely=0.5, relwidth=0.2, relheight=0.1)
 
 
+class HelpPage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
+
+        style = ttk.Style()
+        style.configure('bBack.TButton', font=('Verdana', 10))
+
+        bBack = ttk.Button(self, text="Back to Start", command=lambda: controller.show_frame(StartPage), style="bBack.TButton")
+        bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
+
+        label = ttk.Label(self, text="Tekst met uitleg over test", font=NORMAL_FONT, anchor="center", background=MAIN_COLOR, justify=tk.CENTER)
+        label.place(relx=0.3, rely=0.4, relwidth=0.4, relheight=0.2)
+
+
 class LoadPage(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -70,21 +86,6 @@ class LoadPage(tk.Frame):
 
         label = ttk.Label(self, text="Please wait\nPerforming tests", font=LARGE_FONT, anchor="center", background=MAIN_COLOR, justify=tk.CENTER)
         label.place(relx=0.3, rely=0.3, relwidth=0.4, relheight=0.2)
-
-
-class HelpPage(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
-
-        style = ttk.Style()
-        style.configure('bBack.TButton', font=('Verdana', 10))
-
-        bBack = ttk.Button(self, text="Back to Start", command=lambda: controller.show_frame(StartPage), style="bBack.TButton")
-        bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
-
-        label = ttk.Label(self, text="Tekst met uitleg over test", font=NORMAL_FONT, anchor="center", background=MAIN_COLOR, justify=tk.CENTER)
-        label.place(relx=0.3, rely=0.4, relwidth=0.4, relheight=0.2)
 
 
 class InfoPage(tk.Frame):
@@ -136,56 +137,78 @@ class InfoPage(tk.Frame):
         label.place(relx=0.55, rely=0.41, relwidth=0.15, relheight=0.08)
 
 
+# Current gain (bèta in functie van IC)
 class Graph1Page(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = ttk.Label(self, text="Graph Page", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
-        label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
 
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPage), style="bBack.TButton")
-        bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
+        # fig = Figure(figsize=(10, 10), dpi=100, facecolor=MAIN_COLOR)
+        # fig.add_subplot(111).plot([1, 2, 3, 4, 5, 6, 7, 8], [2, 8, 4, 6, 7, 2, 1, 3])
 
-        fig = Figure(figsize=(10, 10), dpi=100, facecolor=MAIN_COLOR)
-        fig.add_subplot(111).plot([1, 2, 3, 4, 5, 6, 7, 8], [2, 8, 4, 6, 7, 2, 1, 3])
+        # fig = Figure(figsize=(10, 10), dpi=100, facecolor=MAIN_COLOR)
+        fig, ax = plt.subplots(figsize=(10, 8), dpi=100)
+        fig.patch.set_facecolor(MAIN_COLOR)
+        ax.plot([1, 2, 3, 4, 5, 6, 7, 8], [2, 8, 4, 6, 7, 2, 1, 3])
+        ax.set_ylabel("Collector current (A)")
+        ax.set_xlabel("Collector current (A)")
 
         canvas = FigureCanvasTkAgg(fig, self)
+        canvas.get_tk_widget().configure(bg=MAIN_COLOR, highlightcolor=MAIN_COLOR, highlightbackground=MAIN_COLOR, insertbackground=ACCENT_COLOR)
         canvas.draw()
 
         toolbar = NavigationToolbar2Tk(canvas, self)
         toolbar.configure(bg=ACCENT_COLOR)
+        toolbar._message_label.config(background=ACCENT_COLOR)
         toolbar.update()
-        # canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand = True)
-        canvas.get_tk_widget().place(relx=0, rely=0.1, relwidth=1, relheight=0.85)
+
+        canvas.get_tk_widget().pack()
+
+        label = ttk.Label(self, text="Current gain", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
+        label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
+
+        bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPage), style="bBack.TButton")
+        bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
 
+# Collector saturatie regio (IC in functie van VCE)
 class Graph2Page(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = ttk.Label(self, text="Graph Page", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
-        label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
-
+        
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPage), style="bBack.TButton")
-        bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
+        # fig = Figure(figsize=(10, 10), dpi=100, facecolor=MAIN_COLOR)
+        # fig.add_subplot(111).plot([1, 2, 3, 4, 5, 6, 7, 8], [2, 8, 4, 6, 7, 2, 1, 3])
 
-        fig = Figure(figsize=(10, 10), dpi=100, facecolor=MAIN_COLOR)
-        fig.add_subplot(111).plot([1, 2, 3, 4, 5, 6, 7, 8], [7, 3, 6, 1, 8, 3, 4, 2])
+        # fig = Figure(figsize=(10, 10), dpi=100, facecolor=MAIN_COLOR)
+        fig, ax = plt.subplots(figsize=(10, 8), dpi=100)
+        fig.patch.set_facecolor(MAIN_COLOR)
+        ax.plot([1, 2, 3, 4, 5, 6, 7, 8], [2, 8, 4, 6, 7, 2, 1, 3])
+        ax.set_ylabel("Collector current (A)")
+        ax.set_xlabel("Collector current (A)")
 
         canvas = FigureCanvasTkAgg(fig, self)
+        canvas.get_tk_widget().configure(bg=MAIN_COLOR, highlightcolor=MAIN_COLOR, highlightbackground=MAIN_COLOR, insertbackground=ACCENT_COLOR)
         canvas.draw()
 
         toolbar = NavigationToolbar2Tk(canvas, self)
-        toolbar.update()
         toolbar.configure(bg=ACCENT_COLOR)
-        # canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand = True)
-        canvas.get_tk_widget().place(relx=0, rely=0.1, relwidth=1, relheight=0.85)
+        toolbar._message_label.config(background=ACCENT_COLOR)
+        toolbar.update()
+
+        canvas.get_tk_widget().pack()
+
+        label = ttk.Label(self, text="Current gain", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
+        label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
+
+        bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPage), style="bBack.TButton")
+        bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
 
 app = Transistortester()
