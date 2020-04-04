@@ -18,8 +18,6 @@ ACCENT_COLOR = "#ffeec2"
 HEIGHT = 480
 WIDTH = 800
 
-VCE = 9*[2]
-
 
 def rand(start, end, num):
     res = []
@@ -32,23 +30,34 @@ def rand(start, end, num):
 
 fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
 plot1 = fig1.add_subplot(111)
-print("abc")
+
+fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+plot2 = fig2.add_subplot(111)
 
 
-def animate(i):
+def animate1(i):
     plot1.clear()
     plot1.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], app.IC)
-    print(app.IC)
+    print("IC", app.IC)
 
 
+def animate2(i):
+    plot2.clear()
+    plot2.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], app.VCE)
+    print("VCE", app.VCE)
+
+
+# In deze functie moet een onderscheid gemaakt worden tussen BJT en MOSFET
 def load(controller):
-    app.IC = rand(1, 10, 9)     # Hier moet een functie komen die de gemeten waarden doorgeeft
-    print("Pressed start\t", app.IC)
     controller.show_frame(LoadPage)
+    app.IC = rand(1, 10, 9)     # Hier moet een functie komen die de gemeten waarden doorgeeft
+    app.VCE = rand(1, 10, 9)
+    print("Pressed start\t", app.IC, app.VCE)
 
 
 class Transistortester(tk.Tk):
     IC = 9*[2]
+    VCE = 9*[2]
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -210,14 +219,7 @@ class Graph2Page(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        fig, ax = plt.subplots(figsize=(10, 8), dpi=100)
-        fig.patch.set_facecolor(MAIN_COLOR)
-        ax.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], VCE)
-        ax.set_ylabel("Collector current (A)")
-        ax.set_xlabel("Collector current (A)")
-
-        canvas = FigureCanvasTkAgg(fig, self)
-        canvas.get_tk_widget().configure(bg=MAIN_COLOR, highlightcolor=MAIN_COLOR, highlightbackground=MAIN_COLOR, insertbackground=ACCENT_COLOR)
+        canvas = FigureCanvasTkAgg(fig2, self)
         canvas.draw()
 
         toolbar = NavigationToolbar2Tk(canvas, self)
@@ -235,7 +237,8 @@ class Graph2Page(tk.Frame):
 
 
 app = Transistortester()
-ani = animation.FuncAnimation(fig1, animate, interval=1000)  # Inteval in ms
+ani1 = animation.FuncAnimation(fig1, animate1, interval=1000)  # Inteval in ms
+ani2 = animation.FuncAnimation(fig2, animate2, interval=1000)
 app.mainloop()
 
 
