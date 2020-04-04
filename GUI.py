@@ -1,9 +1,15 @@
 from tkinter import ttk
 import tkinter as tk
+
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib import style
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import matplotlib
+import random
+
+style.use("ggplot")
 
 LARGE_FONT = ("Verdana", 20)
 NORMAL_FONT = ("Verdana", 12)
@@ -12,8 +18,37 @@ ACCENT_COLOR = "#ffeec2"
 HEIGHT = 480
 WIDTH = 800
 
+VCE = 9*[2]
+
+
+def rand(start, end, num):
+    res = []
+
+    for j in range(num):
+        res.append(random.randint(start, end))
+
+    return res
+
+
+fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+plot1 = fig1.add_subplot(111)
+print("abc")
+
+
+def animate(i):
+    plot1.clear()
+    plot1.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], app.IC)
+    print(app.IC)
+
+
+def load(controller):
+    app.IC = rand(1, 10, 9)     # Hier moet een functie komen die de gemeten waarden doorgeeft
+    print("Pressed start\t", app.IC)
+    controller.show_frame(LoadPage)
+
 
 class Transistortester(tk.Tk):
+    IC = 9*[2]
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -48,7 +83,7 @@ class StartPage(tk.Frame):
         style = ttk.Style()
         style.configure('Main.TButton', font=('Verdana', 12))
 
-        bStart = ttk.Button(self, text="Start", command=lambda: controller.show_frame(LoadPage), style="Main.TButton")
+        bStart = ttk.Button(self, text="Start", command=lambda: load(controller), style="Main.TButton")
         bStart.place(relx=0.4, rely=0.4, relwidth=0.2, relheight=0.1)
 
         bHelp = ttk.Button(self, text="Help", command=lambda: controller.show_frame(HelpPage), style="Main.TButton")
@@ -86,6 +121,9 @@ class LoadPage(tk.Frame):
 
         label = ttk.Label(self, text="Please wait\nPerforming tests", font=LARGE_FONT, anchor="center", background=MAIN_COLOR, justify=tk.CENTER)
         label.place(relx=0.3, rely=0.3, relwidth=0.4, relheight=0.2)
+
+        IC = rand(1, 10, 8)
+        VCE = rand(1, 10, 8)
 
 
 class InfoPage(tk.Frame):
@@ -146,18 +184,7 @@ class Graph1Page(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        # fig = Figure(figsize=(10, 10), dpi=100, facecolor=MAIN_COLOR)
-        # fig.add_subplot(111).plot([1, 2, 3, 4, 5, 6, 7, 8], [2, 8, 4, 6, 7, 2, 1, 3])
-
-        # fig = Figure(figsize=(10, 10), dpi=100, facecolor=MAIN_COLOR)
-        fig, ax = plt.subplots(figsize=(10, 8), dpi=100)
-        fig.patch.set_facecolor(MAIN_COLOR)
-        ax.plot([1, 2, 3, 4, 5, 6, 7, 8], [2, 8, 4, 6, 7, 2, 1, 3])
-        ax.set_ylabel("Collector current (A)")
-        ax.set_xlabel("Collector current (A)")
-
-        canvas = FigureCanvasTkAgg(fig, self)
-        canvas.get_tk_widget().configure(bg=MAIN_COLOR, highlightcolor=MAIN_COLOR, highlightbackground=MAIN_COLOR, insertbackground=ACCENT_COLOR)
+        canvas = FigureCanvasTkAgg(fig1, self)
         canvas.draw()
 
         toolbar = NavigationToolbar2Tk(canvas, self)
@@ -179,17 +206,13 @@ class Graph2Page(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        
+
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        # fig = Figure(figsize=(10, 10), dpi=100, facecolor=MAIN_COLOR)
-        # fig.add_subplot(111).plot([1, 2, 3, 4, 5, 6, 7, 8], [2, 8, 4, 6, 7, 2, 1, 3])
-
-        # fig = Figure(figsize=(10, 10), dpi=100, facecolor=MAIN_COLOR)
         fig, ax = plt.subplots(figsize=(10, 8), dpi=100)
         fig.patch.set_facecolor(MAIN_COLOR)
-        ax.plot([1, 2, 3, 4, 5, 6, 7, 8], [2, 8, 4, 6, 7, 2, 1, 3])
+        ax.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], VCE)
         ax.set_ylabel("Collector current (A)")
         ax.set_xlabel("Collector current (A)")
 
@@ -204,7 +227,7 @@ class Graph2Page(tk.Frame):
 
         canvas.get_tk_widget().pack()
 
-        label = ttk.Label(self, text="Current gain", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
+        label = ttk.Label(self, text="Collector saturatie regio", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
 
         bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPage), style="bBack.TButton")
@@ -212,6 +235,7 @@ class Graph2Page(tk.Frame):
 
 
 app = Transistortester()
+ani = animation.FuncAnimation(fig1, animate, interval=1000)  # Inteval in ms
 app.mainloop()
 
 
