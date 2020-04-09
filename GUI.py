@@ -23,12 +23,6 @@ ACCENT_COLOR = "#ffeec2"
 HEIGHT = 480
 WIDTH = 800
 
-fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-plot1 = fig1.add_subplot(111)
-
-fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-plot2 = fig2.add_subplot(111)
-
 
 def rand(start, end, num):
     res = []
@@ -39,23 +33,21 @@ def rand(start, end, num):
     return res
 
 
-def animate1(i):
-    plot1.clear()
-    plot1.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], app.IC)
-    print("IC", app.IC)
-
-
-def animate2(i):
-    plot2.clear()
-    plot2.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], app.VCE)
-    print("VCE", app.VCE)
+def writeCSV(x, y, xTitle, yTitle):
+    f = open("data.csv", 'w')
+    with f:
+        writer = csv.writer(f)
+        writer.writerow([xTitle, yTitle])
+        for i in range(x.size()):
+            writer.writerow([x[i], y[i]])
+    copyCSV()
 
 
 # In deze functie moet een onderscheid gemaakt worden tussen BJT en MOSFET
 def load(controller):
     temp = ["C", "B", "E"]
-    thread_IC = threading.Thread(target=getInfo)     # Hier moet een functie komen die de gemeten waarden doorgeeft
-    thread_IC.start()
+    thread = threading.Thread(target=app.getInfo)     # Hier moet een functie komen die de gemeten waarden doorgeeft
+    thread.start()
 
     # Type transistor
     app.transType.set("MOSFET")
@@ -69,35 +61,28 @@ def load(controller):
     temp.remove(choise)
     app.pin3.set(temp[0])
 
-    thread_IC.join()
+    app.update1()
+    app.update2()
+
+    thread.join()
     print("Pressed start\t", app.IC, app.VCE)
     controller.show_frame(InfoPageBJT)
 
 
-def getInfo():
-    app.IC = rand(1, 10, 9)
-    app.VCE = rand(1, 10, 9)
-
-
-def writeCSV(x, y, xTitle, yTitle):
-    f = open("data.csv", 'w')
-    with f:
-        writer = csv.writer(f)
-        writer.writerow([xTitle, yTitle])
-        for i in range(x.size()):
-            writer.writerow([x[i], y[i]])
-    
-
-
-
 class Transistortester(tk.Tk):
-    IC = 9*[2]
-    VCE = 9*[2]
     # Labels
     pin1 = 0
     pin2 = 0
     pin3 = 0
     transType = 0
+    # Graph 1
+    IC = 9*[2]
+    fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    plot1 = fig1.add_subplot(111)
+    # Graph 2
+    VCE = 9*[2]
+    fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    plot2 = fig2.add_subplot(111)
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -129,6 +114,22 @@ class Transistortester(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
+
+    def update1(self):
+        Transistortester.plot1.clear()
+        Transistortester.plot1.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], Transistortester.IC)
+        Graph1Page.updateGraph()
+        print("IC", Transistortester.IC)
+
+    def update2(self):
+        Transistortester.plot2.clear()
+        Transistortester.plot2.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], Transistortester.VCE)
+        Graph2Page.updateGraph()
+        print("VCE", Transistortester.VCE)
+
+    def getInfo(self):
+        Transistortester.VCE = rand(1, 10, 9)
+        Transistortester.IC = rand(1, 10, 9)
 
 
 class StartPage(tk.Frame):
@@ -235,6 +236,7 @@ class InfoPageBJT(tk.Frame):
 
 # Current gain (bèta in functie van IC)
 class Graph1Page(tk.Frame):
+    canvas = 0
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -242,25 +244,30 @@ class Graph1Page(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        canvas = FigureCanvasTkAgg(fig1, self)
-        canvas.draw()
+        Graph1Page.canvas = FigureCanvasTkAgg(Transistortester.fig1, self)
+        Graph1Page.canvas.draw()
 
-        toolbar = NavigationToolbar2Tk(canvas, self)
+        toolbar = NavigationToolbar2Tk(Graph1Page.canvas, self)
         toolbar.configure(bg=ACCENT_COLOR)
         toolbar._message_label.config(background=ACCENT_COLOR)
         toolbar.update()
 
-        canvas.get_tk_widget().pack()
+        Graph1Page.canvas.get_tk_widget().pack()
 
         label = ttk.Label(self, text="Current gain", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
 
         bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
-
+    
+    def updateGraph():
+        Graph1Page.canvas.draw()
 
 # Collector saturatie regio (IC in functie van VCE)
+
+
 class Graph2Page(tk.Frame):
+    canvas = 0
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -268,15 +275,15 @@ class Graph2Page(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        canvas = FigureCanvasTkAgg(fig2, self)
-        canvas.draw()
+        Graph2Page.canvas = FigureCanvasTkAgg(Transistortester.fig2, self)
+        Graph2Page.canvas.draw()
 
-        toolbar = NavigationToolbar2Tk(canvas, self)
+        toolbar = NavigationToolbar2Tk(Graph2Page.canvas, self)
         toolbar.configure(bg=ACCENT_COLOR)
         toolbar._message_label.config(background=ACCENT_COLOR)
         toolbar.update()
 
-        canvas.get_tk_widget().pack()
+        Graph2Page.canvas.get_tk_widget().pack()
 
         label = ttk.Label(self, text="Collector saturatie regio", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
@@ -284,8 +291,8 @@ class Graph2Page(tk.Frame):
         bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
+    def updateGraph():
+        Graph2Page.canvas.draw()
 
 app = Transistortester()
-ani1 = animation.FuncAnimation(fig1, animate1, interval=1000)  # Inteval in ms
-ani2 = animation.FuncAnimation(fig2, animate2, interval=1000)
 app.mainloop()

@@ -10,11 +10,11 @@ def copyCSV():
     destination = "/media/pi/USB1/datalogger_backup_%s.txt" % datetime.datetime.now().date()
 
     try:
-    # Copy file to destination
-    shutil.copy2(source, destination)
-    # E.g. source and destination is the same location
-    except shutil.Error as e:
-    print("Error: %s" % e)
-    # E.g. source or destination does not exist
+        # Copy file to destination
+        shutil.copy2(source, destination)
+    except shutil.Error as e:   
+        # E.g. source and destination is the same location
+        print("Error: %s" % e)
     except IOError as e:
-    print("Error: %s" % e.strerror)
+        # E.g. source or destination does not exist
+        print("Error: %s" % e.strerror)
