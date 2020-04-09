@@ -7,8 +7,12 @@ from matplotlib import style
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib
+
 import random
 import threading
+import csv
+
+import copyUSB
 
 style.use("ggplot")
 
@@ -19,6 +23,12 @@ ACCENT_COLOR = "#ffeec2"
 HEIGHT = 480
 WIDTH = 800
 
+fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+plot1 = fig1.add_subplot(111)
+
+fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+plot2 = fig2.add_subplot(111)
+
 
 def rand(start, end, num):
     res = []
@@ -27,13 +37,6 @@ def rand(start, end, num):
         res.append(random.randint(start, end))
 
     return res
-
-
-fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-plot1 = fig1.add_subplot(111)
-
-fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-plot2 = fig2.add_subplot(111)
 
 
 def animate1(i):
@@ -53,7 +56,7 @@ def load(controller):
     temp = ["C", "B", "E"]
     thread_IC = threading.Thread(target=getInfo)     # Hier moet een functie komen die de gemeten waarden doorgeeft
     thread_IC.start()
-    
+
     # Type transistor
     app.transType.set("MOSFET")
 
@@ -74,6 +77,17 @@ def load(controller):
 def getInfo():
     app.IC = rand(1, 10, 9)
     app.VCE = rand(1, 10, 9)
+
+
+def writeCSV(x, y, xTitle, yTitle):
+    f = open("data.csv", 'w')
+    with f:
+        writer = csv.writer(f)
+        writer.writerow([xTitle, yTitle])
+        for i in range(x.size()):
+            writer.writerow([x[i], y[i]])
+    
+
 
 
 class Transistortester(tk.Tk):
