@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib
 import random
+import threading
 
 style.use("ggplot")
 
@@ -49,29 +50,63 @@ def animate2(i):
 
 # In deze functie moet een onderscheid gemaakt worden tussen BJT en MOSFET
 def load(controller):
-    controller.show_frame(LoadPage)
-    app.IC = rand(1, 10, 9)     # Hier moet een functie komen die de gemeten waarden doorgeeft
-    app.VCE = rand(1, 10, 9)
+    temp = ["C", "B", "E"]
+    thread_IC = threading.Thread(target=getInfo)     # Hier moet een functie komen die de gemeten waarden doorgeeft
+    thread_IC.start()
+    
+    # Type transistor
+    app.transType.set("MOSFET")
+
+    # Pinlayout
+    choise = random.choice(temp)
+    app.pin1.set(choise)
+    temp.remove(choise)
+    choise = random.choice(temp)
+    app.pin2.set(choise)
+    temp.remove(choise)
+    app.pin3.set(temp[0])
+
+    thread_IC.join()
     print("Pressed start\t", app.IC, app.VCE)
+    controller.show_frame(InfoPageBJT)
+
+
+def getInfo():
+    app.IC = rand(1, 10, 9)
+    app.VCE = rand(1, 10, 9)
 
 
 class Transistortester(tk.Tk):
     IC = 9*[2]
     VCE = 9*[2]
+    # Labels
+    pin1 = 0
+    pin2 = 0
+    pin3 = 0
+    transType = 0
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
         tk.Tk.wm_title(self, "Transistortester")
 
+        Transistortester.pin1 = tk.StringVar()
+        Transistortester.pin1.set("C")
+        Transistortester.pin2 = tk.StringVar()
+        Transistortester.pin2.set("B")
+        Transistortester.pin3 = tk.StringVar()
+        Transistortester.pin3.set("E")
+        Transistortester.transType = tk.StringVar()
+        Transistortester.transType.set("BJT")
+
         # self.attributes('-fullscreen', True)      #full-screen windows
-        canvas = tk.Canvas(self, height=HEIGHT, width=WIDTH, bg=MAIN_COLOR)
-        canvas.pack()
+        self.canvas = tk.Canvas(self, height=HEIGHT, width=WIDTH, bg=MAIN_COLOR)
+        self.canvas.pack()
 
         self.frames = {}
 
-        for F in (StartPage, LoadPage, HelpPage, InfoPage, Graph1Page, Graph2Page):
-            frame = F(canvas, self)
+        for F in (StartPage, HelpPage, InfoPageBJT, Graph1Page, Graph2Page):
+            frame = F(self.canvas, self)
             self.frames[F] = frame
             frame.place(relx=0.05, rely=0.05, relwidth=0.9, relheight=0.9)
 
@@ -114,28 +149,28 @@ class HelpPage(tk.Frame):
         label.place(relx=0.3, rely=0.4, relwidth=0.4, relheight=0.2)
 
 
-class LoadPage(tk.Frame):
+# class LoadPage(tk.Frame):
 
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
+#     def __init__(self, parent, controller):
+#         tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
 
-        style = ttk.Style()
-        style.configure('Main.TButton', font=('Verdana', 12))
+#         style = ttk.Style()
+#         style.configure('Main.TButton', font=('Verdana', 12))
 
-        bStop = ttk.Button(self, text="Stop tests", command=lambda: controller.show_frame(StartPage), style="Main.TButton")
-        bStop.place(relx=0.4, rely=0.6, relwidth=0.2, relheight=0.1)
+#         bStop = ttk.Button(self, text="Stop tests", command=lambda: controller.show_frame(StartPage), style="Main.TButton")
+#         bStop.place(relx=0.4, rely=0.6, relwidth=0.2, relheight=0.1)
 
-        bNext = ttk.Button(self, text="Next", command=lambda: controller.show_frame(InfoPage))
-        bNext.place(relx=0.75, rely=0.85, relwidth=0.2, relheight=0.1)
+#         bNext = ttk.Button(self, text="Next", command=lambda: controller.show_frame(InfoPage))
+#         bNext.place(relx=0.75, rely=0.85, relwidth=0.2, relheight=0.1)
 
-        label = ttk.Label(self, text="Please wait\nPerforming tests", font=LARGE_FONT, anchor="center", background=MAIN_COLOR, justify=tk.CENTER)
-        label.place(relx=0.3, rely=0.3, relwidth=0.4, relheight=0.2)
+#         label = ttk.Label(self, text="Please wait\nPerforming tests", font=LARGE_FONT, anchor="center", background=MAIN_COLOR, justify=tk.CENTER)
+#         label.place(relx=0.3, rely=0.3, relwidth=0.4, relheight=0.2)
 
-        IC = rand(1, 10, 8)
-        VCE = rand(1, 10, 8)
+#         IC = rand(1, 10, 8)
+#         VCE = rand(1, 10, 8)
 
 
-class InfoPage(tk.Frame):
+class InfoPageBJT(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
@@ -160,20 +195,20 @@ class InfoPage(tk.Frame):
         label = ttk.Label(self, text="Type trasistor:", font=NORMAL_FONT, background=ACCENT_COLOR)
         label.place(relx=0.3, rely=0.2, relwidth=0.2, relheight=0.1)
 
-        label = ttk.Label(self, text="BJT", font=NORMAL_FONT, anchor="center", background="white")
+        label = ttk.Label(self, textvariable=Transistortester.transType, font=NORMAL_FONT, anchor="center", background="white")
         label.place(relx=0.55, rely=0.21, relwidth=0.15, relheight=0.08)
 
         # Pin Layout
         label = ttk.Label(self, text="Pin Layout:", font=NORMAL_FONT, background=ACCENT_COLOR)
         label.place(relx=0.3, rely=0.3, relwidth=0.2, relheight=0.1)
 
-        label = ttk.Label(self, text="C", font=NORMAL_FONT, anchor="center", background="white")
+        label = ttk.Label(self, textvariable=Transistortester.pin1, font=NORMAL_FONT, anchor="center", background="white")
         label.place(relx=0.55, rely=0.31, relwidth=0.04, relheight=0.08)
 
-        label = ttk.Label(self, text="B", font=NORMAL_FONT, anchor="center", background="white")
+        label = ttk.Label(self, textvariable=Transistortester.pin2, font=NORMAL_FONT, anchor="center", background="white")
         label.place(relx=0.605, rely=0.31, relwidth=0.04, relheight=0.08)
 
-        label = ttk.Label(self, text="E", font=NORMAL_FONT, anchor="center", background="white")
+        label = ttk.Label(self, textvariable=Transistortester.pin3, font=NORMAL_FONT, anchor="center", background="white")
         label.place(relx=0.66, rely=0.31, relwidth=0.04, relheight=0.08)
 
         # V_BE
@@ -206,7 +241,7 @@ class Graph1Page(tk.Frame):
         label = ttk.Label(self, text="Current gain", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
 
-        bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPage), style="bBack.TButton")
+        bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
 
@@ -232,7 +267,7 @@ class Graph2Page(tk.Frame):
         label = ttk.Label(self, text="Collector saturatie regio", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
 
-        bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPage), style="bBack.TButton")
+        bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
 
@@ -240,19 +275,3 @@ app = Transistortester()
 ani1 = animation.FuncAnimation(fig1, animate1, interval=1000)  # Inteval in ms
 ani2 = animation.FuncAnimation(fig2, animate2, interval=1000)
 app.mainloop()
-
-
-"""
-root = tk.Tk()
-
-canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH)
-canvas.pack()
-
-frame = tk.Frame(root, bg="#80c1ff")
-frame.place(relx=0.1, rely=0.1, relwidth=0.8, relheight=0.8)
-
-start = tk.Button(frame, text="Start")
-start.place(relx=0.7, rely=0.8, relwidth=0.2, relheight=0.1)
-
-root.mainloop()
-"""
