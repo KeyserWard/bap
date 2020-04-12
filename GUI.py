@@ -12,7 +12,7 @@ import random
 import threading
 import csv
 
-import copyUSB
+import save
 
 style.use("ggplot")
 
@@ -33,16 +33,6 @@ def rand(start, end, num):
     return res
 
 
-def writeCSV(x, y, xTitle, yTitle):
-    f = open("data.csv", 'w')
-    with f:
-        writer = csv.writer(f)
-        writer.writerow([xTitle, yTitle])
-        for i in range(x.size()):
-            writer.writerow([x[i], y[i]])
-    copyCSV()
-
-
 # In deze functie moet een onderscheid gemaakt worden tussen BJT en MOSFET
 def load(controller):
     temp = ["C", "B", "E"]
@@ -53,19 +43,19 @@ def load(controller):
     app.transType.set("MOSFET")
 
     # Pinlayout
-    choise = random.choice(temp)
-    app.pin1.set(choise)
-    temp.remove(choise)
-    choise = random.choice(temp)
-    app.pin2.set(choise)
-    temp.remove(choise)
+    choice = random.choice(temp)
+    app.pin1.set(choice)
+    temp.remove(choice)
+    choice = random.choice(temp)
+    app.pin2.set(choice)
+    temp.remove(choice)
     app.pin3.set(temp[0])
 
-    app.update1()
-    app.update2()
+    app.updatePlot(app.plot1, [1, 2, 3, 4, 5, 6, 7, 8, 9], app.hfe, "IC", "hfe")
+    app.updatePlot(app.plot2, [1, 2, 3, 4, 5, 6, 7, 8, 9], app.V_CE, "IC", "hfe")
 
     thread.join()
-    print("Pressed start\t", app.IC, app.VCE)
+    print("Pressed start\t", app.hfe, app.V_CE)
     controller.show_frame(InfoPageBJT)
 
 
@@ -75,12 +65,14 @@ class Transistortester(tk.Tk):
     pin2 = 0
     pin3 = 0
     transType = 0
+
     # Graph 1
-    IC = 9*[2]
+    hfe = 9*[2]
     fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
     plot1 = fig1.add_subplot(111)
+
     # Graph 2
-    VCE = 9*[2]
+    V_CE = 9*[2]
     fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
     plot2 = fig2.add_subplot(111)
 
@@ -115,21 +107,19 @@ class Transistortester(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-    def update1(self):
-        Transistortester.plot1.clear()
-        Transistortester.plot1.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], Transistortester.IC)
-        Graph1Page.updateGraph()
-        print("IC", Transistortester.IC)
+    def updatePlot(self, plot, x, y, xlabel, ylabel):
+        plot.clear()
+        plot.plot(x, y)
+        plot.set_xlabel(xlabel)
+        plot.set_ylabel(ylabel)
 
-    def update2(self):
-        Transistortester.plot2.clear()
-        Transistortester.plot2.plot([0, 1, 2, 3, 4, 5, 6, 7, 8], Transistortester.VCE)
+        # Update alle grafieken
+        Graph1Page.updateGraph()
         Graph2Page.updateGraph()
-        print("VCE", Transistortester.VCE)
 
     def getInfo(self):
-        Transistortester.VCE = rand(1, 10, 9)
-        Transistortester.IC = rand(1, 10, 9)
+        Transistortester.V_CE = rand(1, 10, 9)
+        Transistortester.hfe = rand(1, 10, 9)
 
 
 class StartPage(tk.Frame):
@@ -181,8 +171,8 @@ class HelpPage(tk.Frame):
 #         label = ttk.Label(self, text="Please wait\nPerforming tests", font=LARGE_FONT, anchor="center", background=MAIN_COLOR, justify=tk.CENTER)
 #         label.place(relx=0.3, rely=0.3, relwidth=0.4, relheight=0.2)
 
-#         IC = rand(1, 10, 8)
-#         VCE = rand(1, 10, 8)
+#         hfe = rand(1, 10, 8)
+#         V_CE = rand(1, 10, 8)
 
 
 class InfoPageBJT(tk.Frame):
@@ -234,7 +224,7 @@ class InfoPageBJT(tk.Frame):
         label.place(relx=0.55, rely=0.41, relwidth=0.15, relheight=0.08)
 
 
-# Current gain (bèta in functie van IC)
+# Current gain (bèta/hfe in functie van hfe)
 class Graph1Page(tk.Frame):
     canvas = 0
 
@@ -259,13 +249,15 @@ class Graph1Page(tk.Frame):
 
         bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
-    
+
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: save.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.hfe, "I_C", "hfe"), style="bBack.TButton")
+        bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
+
     def updateGraph():
         Graph1Page.canvas.draw()
 
-# Collector saturatie regio (IC in functie van VCE)
 
-
+# Collector saturatie regio (I_C in functie van V_CE)
 class Graph2Page(tk.Frame):
     canvas = 0
 
@@ -291,8 +283,12 @@ class Graph2Page(tk.Frame):
         bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: save.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.V_CE, "I_C", "V_CE"), style="bBack.TButton")
+        bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
+
     def updateGraph():
         Graph2Page.canvas.draw()
+
 
 app = Transistortester()
 app.mainloop()

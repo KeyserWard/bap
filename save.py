@@ -1,5 +1,27 @@
 import shutil
 import datetime
+import csv
+import tkinter as tk
+import pandas as pd
+
+
+def saveCSV(x, y, xTitle, yTitle):
+    datafile = tk.filedialog.asksaveasfile(mode="w", defaultextension=".csv")
+    datacsv = xTitle + ";" + yTitle + "\n"
+    for i in range(len(x)):
+        datacsv += "{:.2f}".format(x[i]) + ";" + "{:.2f}".format(y[i]) + "\n"
+    datafile.write(datacsv)
+    datafile.close()
+
+    """
+    f_out = tk.filedialog.asksaveasfile(mode='w', defaultextension=".csv")
+    text2save = str(self.text.get(0.0, END))
+    fout.write(text2save)
+    fout.close()
+
+    
+    # copyCSV()"""
+
 
 # From https://stackoverflow.com/questions/43762904/copy-file-to-usb-automatically-on-mount-raspberry-pi
 def copyCSV():
@@ -12,7 +34,7 @@ def copyCSV():
     try:
         # Copy file to destination
         shutil.copy2(source, destination)
-    except shutil.Error as e:   
+    except shutil.Error as e:
         # E.g. source and destination is the same location
         print("Error: %s" % e)
     except IOError as e:
