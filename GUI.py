@@ -12,7 +12,7 @@ import random
 import threading
 import csv
 
-import save
+import saveCSV
 
 style.use("ggplot")
 
@@ -40,7 +40,7 @@ def load(controller):
     thread.start()
 
     # Type transistor
-    app.transType.set("MOSFET")
+    app.transType.set("BJT")
 
     # Pinlayout
     choice = random.choice(temp)
@@ -66,6 +66,7 @@ class Transistortester(tk.Tk):
     pin3 = 0
     transType = 0
 
+    """------------------------------    BJT     ------------------------------"""
     # Graph 1
     hfe = 9*[2]
     fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
@@ -75,6 +76,17 @@ class Transistortester(tk.Tk):
     V_CE = 9*[2]
     fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
     plot2 = fig2.add_subplot(111)
+
+    """----------------------------     MOSFET     ----------------------------"""
+    # Graph 1
+    # hfe = 9*[2]
+    # fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    # plot1 = fig1.add_subplot(111)
+
+    # Graph 2
+    # V_CE = 9*[2]
+    # fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    # plot2 = fig2.add_subplot(111)
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -96,7 +108,7 @@ class Transistortester(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, HelpPage, InfoPageBJT, Graph1Page, Graph2Page):
+        for F in (StartPage, HelpPage, InfoPageBJT, Graph1PageBJT, Graph2PageBJT):
             frame = F(self.canvas, self)
             self.frames[F] = frame
             frame.place(relx=0.05, rely=0.05, relwidth=0.9, relheight=0.9)
@@ -114,8 +126,8 @@ class Transistortester(tk.Tk):
         plot.set_ylabel(ylabel)
 
         # Update alle grafieken
-        Graph1Page.updateGraph()
-        Graph2Page.updateGraph()
+        Graph1PageBJT.updateGraph()
+        Graph2PageBJT.updateGraph()
 
     def getInfo(self):
         Transistortester.V_CE = rand(1, 10, 9)
@@ -154,27 +166,6 @@ class HelpPage(tk.Frame):
         label.place(relx=0.3, rely=0.4, relwidth=0.4, relheight=0.2)
 
 
-# class LoadPage(tk.Frame):
-
-#     def __init__(self, parent, controller):
-#         tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
-
-#         style = ttk.Style()
-#         style.configure('Main.TButton', font=('Verdana', 12))
-
-#         bStop = ttk.Button(self, text="Stop tests", command=lambda: controller.show_frame(StartPage), style="Main.TButton")
-#         bStop.place(relx=0.4, rely=0.6, relwidth=0.2, relheight=0.1)
-
-#         bNext = ttk.Button(self, text="Next", command=lambda: controller.show_frame(InfoPage))
-#         bNext.place(relx=0.75, rely=0.85, relwidth=0.2, relheight=0.1)
-
-#         label = ttk.Label(self, text="Please wait\nPerforming tests", font=LARGE_FONT, anchor="center", background=MAIN_COLOR, justify=tk.CENTER)
-#         label.place(relx=0.3, rely=0.3, relwidth=0.4, relheight=0.2)
-
-#         hfe = rand(1, 10, 8)
-#         V_CE = rand(1, 10, 8)
-
-
 class InfoPageBJT(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -187,10 +178,10 @@ class InfoPageBJT(tk.Frame):
         bBack = ttk.Button(self, text="Back to Start", command=lambda: controller.show_frame(StartPage), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        bGraph1 = ttk.Button(self, text="Current Gain", command=lambda: controller.show_frame(Graph1Page), style="bGraph.TButton")
+        bGraph1 = ttk.Button(self, text="Current Gain", command=lambda: controller.show_frame(Graph1PageBJT), style="bGraph.TButton")
         bGraph1.place(relx=0.35, rely=0.6, relwidth=0.3, relheight=0.1)
 
-        bGraph2 = ttk.Button(self, text="Collector Saturation Region", command=lambda: controller.show_frame(Graph2Page), style="bGraph.TButton")
+        bGraph2 = ttk.Button(self, text="Collector Saturation Region", command=lambda: controller.show_frame(Graph2PageBJT), style="bGraph.TButton")
         bGraph2.place(relx=0.35, rely=0.7, relwidth=0.3, relheight=0.1)
 
         frame = tk.Frame(self, bg=ACCENT_COLOR)
@@ -225,7 +216,7 @@ class InfoPageBJT(tk.Frame):
 
 
 # Current gain (bèta/hfe in functie van hfe)
-class Graph1Page(tk.Frame):
+class Graph1PageBJT(tk.Frame):
     canvas = 0
 
     def __init__(self, parent, controller):
@@ -234,15 +225,15 @@ class Graph1Page(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        Graph1Page.canvas = FigureCanvasTkAgg(Transistortester.fig1, self)
-        Graph1Page.canvas.draw()
+        Graph1PageBJT.canvas = FigureCanvasTkAgg(Transistortester.fig1, self)
+        Graph1PageBJT.canvas.draw()
 
-        toolbar = NavigationToolbar2Tk(Graph1Page.canvas, self)
+        toolbar = NavigationToolbar2Tk(Graph1PageBJT.canvas, self)
         toolbar.configure(bg=ACCENT_COLOR)
         toolbar._message_label.config(background=ACCENT_COLOR)
         toolbar.update()
 
-        Graph1Page.canvas.get_tk_widget().pack()
+        Graph1PageBJT.canvas.get_tk_widget().pack()
 
         label = ttk.Label(self, text="Current gain", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
@@ -250,15 +241,15 @@ class Graph1Page(tk.Frame):
         bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        bCSV = ttk.Button(self, text="Save CSV", command=lambda: save.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.hfe, "I_C", "hfe"), style="bBack.TButton")
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.hfe, "I_C", "hfe"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
     def updateGraph():
-        Graph1Page.canvas.draw()
+        Graph1PageBJT.canvas.draw()
 
 
 # Collector saturatie regio (I_C in functie van V_CE)
-class Graph2Page(tk.Frame):
+class Graph2PageBJT(tk.Frame):
     canvas = 0
 
     def __init__(self, parent, controller):
@@ -267,15 +258,15 @@ class Graph2Page(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        Graph2Page.canvas = FigureCanvasTkAgg(Transistortester.fig2, self)
-        Graph2Page.canvas.draw()
+        Graph2PageBJT.canvas = FigureCanvasTkAgg(Transistortester.fig2, self)
+        Graph2PageBJT.canvas.draw()
 
-        toolbar = NavigationToolbar2Tk(Graph2Page.canvas, self)
+        toolbar = NavigationToolbar2Tk(Graph2PageBJT.canvas, self)
         toolbar.configure(bg=ACCENT_COLOR)
         toolbar._message_label.config(background=ACCENT_COLOR)
         toolbar.update()
 
-        Graph2Page.canvas.get_tk_widget().pack()
+        Graph2PageBJT.canvas.get_tk_widget().pack()
 
         label = ttk.Label(self, text="Collector saturatie regio", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
@@ -283,11 +274,11 @@ class Graph2Page(tk.Frame):
         bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        bCSV = ttk.Button(self, text="Save CSV", command=lambda: save.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.V_CE, "I_C", "V_CE"), style="bBack.TButton")
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.V_CE, "I_C", "V_CE"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
     def updateGraph():
-        Graph2Page.canvas.draw()
+        Graph2PageBJT.canvas.draw()
 
 
 app = Transistortester()
