@@ -241,7 +241,7 @@ class Graph1PageBJT(tk.Frame):
         bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.hfe, "I_C", "hfe"), style="bBack.TButton")
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.hfe, "I_C", "hfe", "CurrentGain.csv"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
     def updateGraph():
@@ -268,13 +268,13 @@ class Graph2PageBJT(tk.Frame):
 
         Graph2PageBJT.canvas.get_tk_widget().pack()
 
-        label = ttk.Label(self, text="Collector saturatie regio", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
+        label = ttk.Label(self, text="Collector saturation region", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
 
         bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.V_CE, "I_C", "V_CE"), style="bBack.TButton")
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.V_CE, "I_C", "V_CE", "CollectorSaturationRegion.csv"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
     def updateGraph():
