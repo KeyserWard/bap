@@ -1,16 +1,11 @@
 #include "TransistorPinnen.h"
+#include "code hardware.h"
 
 #define R_W 50		//in ohm
 #define R_AB 10000	//in ohm
-typedef struct{
-	int basisGateChannel;
-	int collectorDrainChannel;
-	int emitterSourceChannel;
-	char* type;		//pnp of npn
-	char* structuur; //MOSFET of BJT
-} Transistor;
 
-bool chose_config(char* configuratie, int channel) {	// returnt true als de cofiguratie correct is doorgegeven
+
+bool chose_config(const char* configuratie, int channel) {	// returnt true als de cofiguratie correct is doorgegeven
 	if(!strcmp(configuratie, "Open")){				
 		set_switch(channel, false);
 		return true;
@@ -83,8 +78,8 @@ bool locate_base(Transistor* trans){
 				}
 				else {
 					if(inBewaar == j){
-						transistor->basisGateChannel = switches[j].channel;
-						transistor->type = "NPN";
+						trans->basisGateChannel = switches[j].channel;
+						trans->type = "NPN";
 						return true;
 					}
 				}	
@@ -97,15 +92,15 @@ bool locate_base(Transistor* trans){
 				}
 				else{
 					if(uitBewaar == j){
-						transistor->basisGateChannel = switches[j].channel;
-						transistor->type = "PNP";
+						trans->basisGateChannel = switches[j].channel;
+						trans->type = "PNP";
 						return true;
 					}
 				}
 			}
 		}	
 	}
-	if(transistor->basisGateChannel == -1 || strcmp(transistor->type, "Onbepaald") ){
+	if(trans->basisGateChannel == -1 || strcmp(trans->type, "Onbepaald") ){
 		return false;																	//false wanneer de geen basis of type gevonden is, dus transistor is defect
 	}
 
@@ -133,7 +128,7 @@ void locate_collector_emitter(Transistor* transistor){
 	collectorIndex = (basisIndex + 1) %3;
 	emitterIndex = 	(basisIndex + 2) %3;											
 
-	chose_config("Vcc", transistor->basisGate);	
+	chose_config("Vcc", transistor->basisGateChannel);	
 	chose_config("Vcc", channels[collectorIndex]);		
 	chose_config("Ground", channels[emitterIndex]);		
 	meting = measure_current(channels[emitterIndex]); 			// double measure_current(int pin) dus stroom meten door de pin van de emitter											
@@ -142,14 +137,11 @@ void locate_collector_emitter(Transistor* transistor){
 	
 	if(meting <  measure_current(channels[collectorIndex])){
 		//de 2 GES met elkaar vergelijken
-		transistor->collectorDrain = channels[collectorIndex];		//GES in eerste situatie
-		transistor->emitterSource = channels[emitterIndex];			
+		transistor->collectorDrainChannel = channels[collectorIndex];		//GES in eerste situatie
+		transistor->emitterSourceChannel = channels[emitterIndex];			
 	} else {
-		transistor->collectorDrain = channels[emitterIndex];			//GES in tweede situatie
-		transistor->emitterSource = channels[collectorIndex];
+		transistor->collectorDrainChannel = channels[emitterIndex];			//GES in tweede situatie
+		transistor->emitterSourceChannel = channels[collectorIndex];
 	}
 	
 }
-}
-
-
