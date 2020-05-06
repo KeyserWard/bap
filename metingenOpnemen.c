@@ -13,15 +13,15 @@
 
 
 
-double* meting_IC_VCE(Transistor* trans, int xWaarde, double IB){
+double* meting_IC_VCE(Transistor* trans, int xWaarde, double IB){		//IB in A
 	double* punt = (double*)malloc(sizeof(double)*2);
 	double VCE = xWaarde / 4;
 	int RB = (int)VCE / IB;				//VBE = VCE
-	float IC;
+	double IC;
 	//VCE inverteren als de bjt een pnp is
 	if(!strcmp(trans->type, "pnp"))
 		VCE *= -1;
-	IC = (float) VCE / 2,5;  //IC in mA
+	IC = (double) VCE / 2,5;  //IC in mA
 	//weerstanden instellen
 	
 	Weerstand(trans->collectorDrainChannel, 2500);	//bij VCE = 10V mag I max = 5mA => R moet minimaal 2000ohm zijn
@@ -36,8 +36,8 @@ double* meting_IC_VCE(Transistor* trans, int xWaarde, double IB){
 		set_dac_voltage(trans->basisGateChannel, VCE);	//VBE = VCE
 		
 		//IC opmeten
-		punt[0] = get_adc_voltage(trans->collectorDrainChannel) - get_adc_voltage(trans->emitterSourceChannel); //VCE controle
-		punt[1] = (float)get_current(trans->collectorDrainChannel) / 1000;		
+		punt[0] = (double)get_adc_voltage(trans->collectorDrainChannel) - get_adc_voltage(trans->emitterSourceChannel); //VCE controle
+		punt[1] = (double)get_current(trans->collectorDrainChannel);		
 	} else {
 		punt[0] = VCE;
 		punt[1] = 0;
