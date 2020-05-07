@@ -20,6 +20,7 @@
 #define TOUCHPAD 7
 #define AANTAL_SPI_DEVICES 8
 
+
 #define CHANNEL1 0b00000000		//0
 #define CHANNEL2 0b00000001		//1
 #define CHANNEL3 0b00000010		//2
@@ -61,18 +62,30 @@ static switch_id switches[3] = {	//actief laag
 	{CHANNEL3,	38,		28}
 };
 
+typedef struct {
+	int pin;		//pin-nummer op 40-pins connector
+	int gpio;		//gpio pin-nummer
+} pin;
+
+static pin busy = {15, 3};
+static pin convst = {16, 4};
+
+
 int DigiPot_value[3];
-
-
 
 int set_spi (int device) {
 	for (int i = 1; i < AANTAL_SPI_DEVICES; i++) {		//alle pinnen hoog zetten
 		digitalWrite(spi_devices[i].gpio, HIGH);
 	}
+	digitalWrite(convst.gpio, HIGH);						//hangt samen met RD voor ADC
+	
 	if (device > 0) {									//actieve CS hoog zetten, tenzij RESET (=0)
 	digitalWrite(spi_devices[device].gpio, LOW);
 	}
-
+	if (device == ADC) {
+		digitalWrite(convst.gpio, LOW);
+	}
+	
 	return 1;
 }
 
@@ -117,8 +130,13 @@ int setup_hardware() {
 	
 	for (int i = 0; i < 3; i++) {						//controle pinnen voor switch instellen
 		pinMode(switches[i].gpio, OUTPUT);
-		digitalWrite(switches[i].gpio, HIGH);			//standaard hoog zetten, alle switches open (beveiliging)
+		digitalWrite(switches[i].gpio, LOW);			//standaard laag zetten, alle switches open (beveiliging)
 	}
+	
+	//setup adc
+	pinMode(busy.gpio, INPUT);
+	pinMode(convst.gpio, OUTPUT);
+	digitalWrite(convst.gpio, HIGH);
 		
 	return 1;
 }
@@ -135,11 +153,12 @@ int set_dac_value(unsigned char channel, int value) {
 		data_lsb
 	};
 	send_data(DAC, data, 3);
-		
+	
+	std::cout << "DAC channel " << channel << " set to: " << value << "\n"; 
 	return 1;
 }
 
-int set_dac_voltage(int channel, double voltage) {
+int set_dac_voltage(int channel, double voltage) {	
 	int value = voltage * 4096 / 2 / 5;
 	set_dac_value(channel, value);
 	
@@ -153,14 +172,24 @@ int get_adc_value(int channel) {
 		0b00000000
 	};					
 	c[0] += (channel<<4);
-	send_data(ADC, c, 2);					
+
+	send_data(ADC, c, 2);
+	while(!digitalRead(busy.gpio)) {}
+	c[0] = 0x00;
+	c[1] = 0x00;	
+	send_data(ADC, c, 2);				
 	
-	return c[0] *256 + c[1];
+	int i = (c[0] << 4) + (c[1] >> 4);
+	if (i >= 2048) {
+		i -= 4096;
+	}
+    std::cout << "ADC channel " << channel << "  data returned: " << i << "\n"; 
+	return i;
 }
 
 double get_adc_voltage(int channel) {
 	double d = get_adc_value(channel);
-	d = d * 10 / 4096;
+	d = d * 20 / 4096;
 	
 	return d;
 }
@@ -172,9 +201,11 @@ double get_current(int channel) {
 }
 
 int set_digipot(int channel, unsigned char value) {
+	std::cout << "digipot " << channel << " set to: " << (int)value << "\n"; 
 	channel &= 0b00000011;						//beveiliging tegen verkeerde input => fout er zijn maar drie kanalen
 	DigiPot_value[channel] = value;
 	send_data(DigiPot1 + channel, &value, 1);
+
 	
 	return value;
 }
@@ -182,11 +213,11 @@ int set_digipot(int channel, unsigned char value) {
 int set_switch(int channel, bool value) {
 	if (channel == ALL_CHANNELS) {						//om alle kanalen in 1 keer open of gesloten te zetten
 		for(int i = 0; i<3; i++) {
-			set_switch(i,value);						//recursief alle drie de kanalen overlopen
+			set_switch(i,!value);						//recursief alle drie de kanalen overlopen
 		}
 	}
 	else {
-		digitalWrite(switches[channel].gpio, value);	//kanaal per kanaal gaan bedienen
+		digitalWrite(switches[channel].gpio, !value);	//kanaal per kanaal gaan bedienen
 	}													
 	
 	return value;
@@ -197,21 +228,44 @@ int set_switch(int channel, bool value) {
 
 int main(int argc, char **argv) {
 	setup_hardware();
-	delay(500);
+
 	while(1){
-		setup_hardware();
-		delay(1);
-		set_digipot(CHANNEL1, 50);
-		set_digipot(CHANNEL2, 120);
-		set_digipot(CHANNEL3, 170);
-		set_dac_value(CHANNEL1, 1000);
-		set_dac_value(CHANNEL2, 2000);
-		set_dac_value(CHANNEL3, 3000);
-		set_dac_value(CHANNEL4, 4000);
+		//test digipots
+		
+		set_digipot(CHANNEL1, 128);
+		set_digipot(CHANNEL2, 128);
+		set_digipot(CHANNEL3, 128);
+		t++;
+		if (t==256) { t=0;}
+		//delay(100);
+		
+		
+		//test switch
+		
+		set_switch(CHANNEL1, FALSE);
+		set_switch(CHANNEL2, TRUE);
+		set_switch(CHANNEL3, TRUE);
+		/*
+		delay(2500);
+		set_switch(CHANNEL1, FALSE);
+		set_switch(CHANNEL2, FALSE);
+		set_switch(CHANNEL3, FALSE);
+		delay(2500);
+		*/
+		
+		//test DAC
+		
+		set_dac_value(CHANNEL1, 1024);
+		set_dac_value(CHANNEL2, 1024);
+		set_dac_value(CHANNEL3, 1024);
+		
+		
+		//test ADC
+		
 		get_adc_value(CHANNEL1);
 		get_adc_value(CHANNEL2);
 		get_adc_value(CHANNEL3);
-		get_adc_value(CHANNEL4);
-		delay(1);
+		delay(250);
+		
 	}
 }
