@@ -1,5 +1,6 @@
 from tkinter import ttk
 import tkinter as tk
+from PIL import ImageTk, Image
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -11,6 +12,7 @@ import matplotlib
 import random
 import threading
 import csv
+import os
 
 import saveCSV
 
@@ -138,7 +140,7 @@ class StartPage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
-        label = ttk.Label(self, text="Start Page", font=LARGE_FONT, background=MAIN_COLOR)
+        label = ttk.Label(self, text="Start Pagina", font=LARGE_FONT, background=MAIN_COLOR)
         label.pack(pady=10, padx=10)
 
         style = ttk.Style()
@@ -159,11 +161,24 @@ class HelpPage(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        bBack = ttk.Button(self, text="Back to Start", command=lambda: controller.show_frame(StartPage), style="bBack.TButton")
+        bBack = ttk.Button(self, text="Naar Start", command=lambda: controller.show_frame(StartPage), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        label = ttk.Label(self, text="Tekst met uitleg over test", font=NORMAL_FONT, anchor="center", background=MAIN_COLOR, justify=tk.CENTER)
-        label.place(relx=0.3, rely=0.4, relwidth=0.4, relheight=0.2)
+        label = ttk.Label(self, text="Uitleg over test", font=LARGE_FONT, background=MAIN_COLOR)
+        label.pack(pady=10, padx=10)
+
+        label = ttk.Label(self, text="● Plug de component in het breadboard. \n● Verbind de draden van de transistortester met het breadboard. \n● Ga naar de startpagina en druk op start.",
+                          font=NORMAL_FONT, anchor="center", background=MAIN_COLOR, justify=tk.LEFT)
+        label.place(relx=0.1, rely=0.2, relwidth=0.8, relheight=0.2)
+
+        path = os.getcwd() + "/TransistorBreadboard.png"
+
+        img = Image.open(path)
+        img = img.resize((int(0.5*HEIGHT - 0.05*HEIGHT), int(0.5*HEIGHT - 0.05*HEIGHT)), Image.ANTIALIAS)
+        img = ImageTk.PhotoImage(img)
+        panel = ttk.Label(self, image=img)
+        panel.image = img
+        panel.place(relx=0.35, rely=0.4, relwidth=0.3, relheight=0.5)
 
 
 class InfoPageBJT(tk.Frame):
@@ -175,7 +190,7 @@ class InfoPageBJT(tk.Frame):
         style.configure('bBack.TButton', font=('Verdana', 10))
         style.configure('bGraph.TButton', font=('Verdana', 11))
 
-        bBack = ttk.Button(self, text="Back to Start", command=lambda: controller.show_frame(StartPage), style="bBack.TButton")
+        bBack = ttk.Button(self, text="Naar Start", command=lambda: controller.show_frame(StartPage), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
         bGraph1 = ttk.Button(self, text="Current Gain", command=lambda: controller.show_frame(Graph1PageBJT), style="bGraph.TButton")
@@ -215,7 +230,7 @@ class InfoPageBJT(tk.Frame):
         label.place(relx=0.55, rely=0.41, relwidth=0.15, relheight=0.08)
 
 
-# Current gain (bèta/hfe in functie van hfe)
+# Current gain (bèta/hfe in functie van I_C)
 class Graph1PageBJT(tk.Frame):
     canvas = 0
 
@@ -238,10 +253,11 @@ class Graph1PageBJT(tk.Frame):
         label = ttk.Label(self, text="Current gain", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
 
-        bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
+        bBack = ttk.Button(self, text="Terug", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.hfe, "I_C", "hfe", "CurrentGain.csv"), style="bBack.TButton")
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9],
+                                                                                 Transistortester.hfe, "I_C", "hfe", "CurrentGain.csv"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
     def updateGraph():
@@ -271,10 +287,11 @@ class Graph2PageBJT(tk.Frame):
         label = ttk.Label(self, text="Collector saturation region", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
 
-        bBack = ttk.Button(self, text="Back to Info", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
+        bBack = ttk.Button(self, text="Terug", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9], Transistortester.V_CE, "I_C", "V_CE", "CollectorSaturationRegion.csv"), style="bBack.TButton")
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9],
+                                                                                 Transistortester.V_CE, "I_C", "V_CE", "CollectorSaturationRegion.csv"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
     def updateGraph():
