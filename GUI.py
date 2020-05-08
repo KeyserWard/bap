@@ -37,28 +37,37 @@ def rand(start, end, num):
 
 # In deze functie moet een onderscheid gemaakt worden tussen BJT en MOSFET
 def load(controller):
-    temp = ["C", "B", "E"]
+    layout = ["C", "B", "E"]
+    transistorTypes = ["BJT NPN", "BJT PNP", "MOSFET n-channel enhancement", "MOSFET p-channel enhancement", "MOSFET n-channel depletion", "MOSFET p-channel depletion"]
     thread = threading.Thread(target=app.getInfo)     # Hier moet een functie komen die de gemeten waarden doorgeeft
     thread.start()
 
-    # Type transistor
-    app.transType.set("BJT")
-
     # Pinlayout
-    choice = random.choice(temp)
+    choice = random.choice(layout)
     app.pin1.set(choice)
-    temp.remove(choice)
-    choice = random.choice(temp)
+    layout.remove(choice)
+    choice = random.choice(layout)
     app.pin2.set(choice)
-    temp.remove(choice)
-    app.pin3.set(temp[0])
+    layout.remove(choice)
+    app.pin3.set(layout[0])
 
     app.updatePlot(app.plot1, [1, 2, 3, 4, 5, 6, 7, 8, 9], app.hfe, "IC", "hfe")
     app.updatePlot(app.plot2, [1, 2, 3, 4, 5, 6, 7, 8, 9], app.V_CE, "IC", "hfe")
 
     thread.join()
     print("Pressed start\t", app.hfe, app.V_CE)
-    controller.show_frame(InfoPageBJT)
+    kapot = random.randrange(0, 10)
+    transistorType = random.choice(transistorTypes)
+
+    if (kapot < 9):
+        if (transistorType == "BJT NPN" or transistorType == "BJT PNP"):
+            print("BJT")
+            controller.show_frame(InfoPageBJT)
+        else:
+            controller.show_frame(InfoPageMOSFET)
+        app.transType.set(transistorType)
+    else:
+        controller.show_frame(BrokePage)
 
 
 class Transistortester(tk.Tk):
@@ -69,6 +78,8 @@ class Transistortester(tk.Tk):
     transType = 0
 
     """------------------------------    BJT     ------------------------------"""
+    V_BE = 0
+
     # Graph 1
     hfe = 9*[2]
     fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
@@ -95,6 +106,7 @@ class Transistortester(tk.Tk):
 
         tk.Tk.wm_title(self, "Transistortester")
 
+        # Zetten van initiële waarden
         Transistortester.pin1 = tk.StringVar()
         Transistortester.pin1.set("C")
         Transistortester.pin2 = tk.StringVar()
@@ -102,7 +114,9 @@ class Transistortester(tk.Tk):
         Transistortester.pin3 = tk.StringVar()
         Transistortester.pin3.set("E")
         Transistortester.transType = tk.StringVar()
-        Transistortester.transType.set("BJT")
+        Transistortester.transType.set("BJT NPN")
+        Transistortester.V_BE = tk.StringVar()
+        Transistortester.V_BE.set(str(0.635) + "V")
 
         # self.attributes('-fullscreen', True)      #full-screen windows
         self.canvas = tk.Canvas(self, height=HEIGHT, width=WIDTH, bg=MAIN_COLOR)
@@ -110,7 +124,7 @@ class Transistortester(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, HelpPage, InfoPageBJT, Graph1PageBJT, Graph2PageBJT):
+        for F in (StartPage, HelpPage, BrokePage, InfoPageBJT, InfoPageMOSFET, Graph1PageBJT, Graph2PageBJT):
             frame = F(self.canvas, self)
             self.frames[F] = frame
             frame.place(relx=0.05, rely=0.05, relwidth=0.9, relheight=0.9)
@@ -132,15 +146,15 @@ class Transistortester(tk.Tk):
         Graph2PageBJT.updateGraph()
 
     def getInfo(self):
-        Transistortester.V_CE = rand(1, 10, 9)
-        Transistortester.hfe = rand(1, 10, 9)
+        Transistortester.V_CE = rand(1, 10, 9)  # Functie met gemeten waarden
+        Transistortester.hfe = rand(1, 10, 9)   # Functie met gemeten waarden
 
 
 class StartPage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
-        label = ttk.Label(self, text="Start Pagina", font=LARGE_FONT, background=MAIN_COLOR)
+        label = ttk.Label(self, text="Startpagina", font=LARGE_FONT, background=MAIN_COLOR)
         label.pack(pady=10, padx=10)
 
         style = ttk.Style()
@@ -179,6 +193,24 @@ class HelpPage(tk.Frame):
         panel = ttk.Label(self, image=img)
         panel.image = img
         panel.place(relx=0.35, rely=0.4, relwidth=0.3, relheight=0.5)
+
+
+class BrokePage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
+        label = ttk.Label(self, text="Kapot", font=LARGE_FONT, background=MAIN_COLOR)
+        label.pack(pady=10, padx=10)
+
+        style = ttk.Style()
+        style.configure('Main.TButton', font=('Verdana', 12))
+
+        bBack = ttk.Button(self, text="Naar Start", command=lambda: controller.show_frame(StartPage), style="bBack.TButton")
+        bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
+
+        label = ttk.Label(self, text="Het ziet ernaar uit dat de component kapot is.\nCheck voor de zekerheid of de component goed is aangesloten.",
+                          font=NORMAL_FONT, anchor="center", background=MAIN_COLOR, justify=tk.CENTER)
+        label.place(relx=0.1, rely=0.2, relwidth=0.8, relheight=0.2)
 
 
 class InfoPageBJT(tk.Frame):
@@ -226,8 +258,57 @@ class InfoPageBJT(tk.Frame):
         label = ttk.Label(self, text="V_BE:", font=NORMAL_FONT, background=ACCENT_COLOR)
         label.place(relx=0.3, rely=0.4, relwidth=0.2, relheight=0.1)
 
-        label = ttk.Label(self, text="0.635 V", font=NORMAL_FONT, anchor="center", background="white")
+        label = ttk.Label(self, textvariable=Transistortester.V_BE, font=NORMAL_FONT, anchor="center", background="white")
         label.place(relx=0.55, rely=0.41, relwidth=0.15, relheight=0.08)
+
+
+class InfoPageMOSFET(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
+
+        style = ttk.Style()
+        style.configure('bBack.TButton', font=('Verdana', 10))
+        style.configure('bGraph.TButton', font=('Verdana', 11))
+
+        bBack = ttk.Button(self, text="Naar Start", command=lambda: controller.show_frame(StartPage), style="bBack.TButton")
+        bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
+
+        bGraph1 = ttk.Button(self, text="Current Gain", command=lambda: controller.show_frame(Graph1PageBJT), style="bGraph.TButton")
+        bGraph1.place(relx=0.35, rely=0.6, relwidth=0.3, relheight=0.1)
+
+        bGraph2 = ttk.Button(self, text="Collector Saturation Region", command=lambda: controller.show_frame(Graph2PageBJT), style="bGraph.TButton")
+        bGraph2.place(relx=0.35, rely=0.7, relwidth=0.3, relheight=0.1)
+
+        frame = tk.Frame(self, bg=ACCENT_COLOR)
+        frame.place(relx=0.1, rely=0.15, relwidth=0.8, relheight=0.4)
+
+        # Type transistor
+        label = ttk.Label(self, text="Type trasistor:", font=NORMAL_FONT, background=ACCENT_COLOR)
+        label.place(relx=0.15, rely=0.2, relwidth=0.2, relheight=0.1)
+
+        label = ttk.Label(self, textvariable=Transistortester.transType, font=NORMAL_FONT, anchor="center", background="white")
+        label.place(relx=0.4, rely=0.21, relwidth=0.45, relheight=0.08)
+
+        # Pin Layout
+        label = ttk.Label(self, text="Pin Layout:", font=NORMAL_FONT, background=ACCENT_COLOR)
+        label.place(relx=0.15, rely=0.3, relwidth=0.2, relheight=0.1)
+
+        label = ttk.Label(self, textvariable=Transistortester.pin1, font=NORMAL_FONT, anchor="center", background="white")
+        label.place(relx=0.4, rely=0.31, relwidth=0.09, relheight=0.08)
+
+        label = ttk.Label(self, textvariable=Transistortester.pin2, font=NORMAL_FONT, anchor="center", background="white")
+        label.place(relx=0.58, rely=0.31, relwidth=0.09, relheight=0.08)
+
+        label = ttk.Label(self, textvariable=Transistortester.pin3, font=NORMAL_FONT, anchor="center", background="white")
+        label.place(relx=0.76, rely=0.31, relwidth=0.09, relheight=0.08)
+
+        # V_BE
+        label = ttk.Label(self, text="V_BE:", font=NORMAL_FONT, background=ACCENT_COLOR)
+        label.place(relx=0.15, rely=0.4, relwidth=0.2, relheight=0.1)
+
+        label = ttk.Label(self, text="0.635 V", font=NORMAL_FONT, anchor="center", background="white")
+        label.place(relx=0.4, rely=0.41, relwidth=0.45, relheight=0.08)
 
 
 # Current gain (bèta/hfe in functie van I_C)
