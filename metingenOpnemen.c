@@ -36,7 +36,7 @@ double* meting_IC_VCE(Transistor* trans, int xWaarde, double IB){		//IB in A
 	
 	return punt;		//punt[x,y] in [V, mA]
 }
-
+//nog niet af!
 double* meting_IB_VBE(Transistor* trans, int xWaarde){
 	double* punt = (double*)malloc(sizeof(double)*2);
 	
