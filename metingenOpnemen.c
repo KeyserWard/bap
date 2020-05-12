@@ -1,16 +1,6 @@
 //metingen
 
 
-#include "TransistorPinnen.h"
-#include "code hardware.h"
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define METINGAANTAL 21 //0 tem 20 punten
-
 
 
 double* meting_IC_VCE(Transistor* trans, int xWaarde, double IB){		//IB in A
