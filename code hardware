@@ -20,7 +20,6 @@
 #define TOUCHPAD 7
 #define AANTAL_SPI_DEVICES 8
 
-
 #define CHANNEL1 0b00000000		//0
 #define CHANNEL2 0b00000001		//1
 #define CHANNEL3 0b00000010		//2
@@ -29,6 +28,8 @@
 
 #define R_SWITCH 8	//R-on switch 5-10 Ohm (nog te meten, volgens datasheet)
 
+#define DEBUG true
+
 int t = 0;
 
 typedef struct {
@@ -36,7 +37,7 @@ typedef struct {
 	int pin;		//pin-nummer op 40-pins connector
 	int gpio;		//gpio pin-nummer
 	int speed;		//CLk Speed in Hz
-	int mode;		//MODE1-4
+	int mode;		//SPI MODE1-4
 } spi_device_id;
 
 static spi_device_id spi_devices [AANTAL_SPI_DEVICES] = {
@@ -70,34 +71,44 @@ typedef struct {
 static pin busy = {15, 3};
 static pin convst = {16, 4};
 
-
 int DigiPot_value[3];
 
-int set_spi (int device) {
+//zet correcte Chip Select laag
+//params: int device
+//return: bool error
+bool set_spi (int device) {
 	for (int i = 1; i < AANTAL_SPI_DEVICES; i++) {		//alle pinnen hoog zetten
 		digitalWrite(spi_devices[i].gpio, HIGH);
 	}
-	digitalWrite(convst.gpio, HIGH);						//hangt samen met RD voor ADC
+	digitalWrite(convst.gpio, HIGH);					//hangt samen met RD voor ADC
 	
-	if (device > 0) {									//actieve CS hoog zetten, tenzij RESET (=0)
-	digitalWrite(spi_devices[device].gpio, LOW);
+	if (0 <= device && device <= AANTAL_SPI_DEVICES) {	//actieve CS hoog zetten, tenzij RESET (=0)
+		if (device == RESET) {return 1;}					//reset, niets anders laag zetten
+		digitalWrite(spi_devices[device].gpio, LOW);	//devise_CS laag zetten
+		if (device == ADC) {							//indien adc ook convst hangt samen met RD
+			digitalWrite(convst.gpio, LOW);
+		}
+		return 1;
 	}
-	if (device == ADC) {
-		digitalWrite(convst.gpio, LOW);
-	}
-	
-	return 1;
+	return 0;											//foutieve parameter device
 }
 
-int send_data(int device, unsigned char data[], int length) {
-	set_spi(device);
+//stuur data over SPI
+//params: int device, uchar data, int lengte van data #bytes
+//return: bool error
+bool send_data(int device, unsigned char data[], int length) {
+	bool e = 1;
+	e &= set_spi(device);
 	wiringPiSPIDataRW(0, data, length);
-	set_spi(RESET);
+	e &= set_spi(RESET);
 	
-	return 1;
+	return e;
 }
 
-int setup_hardware() {
+//setup, zet de juiste instellingen, steeds gebruiken na opstart!
+//params:
+//return: bool error
+bool setup_hardware() {
 	wiringPiSetup();
 	
 	if (t==0){
@@ -141,8 +152,11 @@ int setup_hardware() {
 	return 1;
 }
 
-
+//set value from dac
+//params: uchar channel(1-4,ALL), int value(0-1023)
+//return: bool error
 int set_dac_value(unsigned char channel, int value) {
+	bool e = 1;
 	channel &= 0b00001111;								//beveiliging tegen verkeerde input
 	channel |= 0b00110000;								//command + kanaal
 	unsigned char data_msb = value>>4;					//12bit data opdelen in twee bytes
@@ -152,65 +166,101 @@ int set_dac_value(unsigned char channel, int value) {
 		data_msb,
 		data_lsb
 	};
-	send_data(DAC, data, 3);
+	e &= send_data(DAC, data, 3);
 	
-	std::cout << "DAC channel " << channel << " set to: " << value << "\n"; 
-	return 1;
+	if (DEBUG) {std::cout << "DAC channel " << channel << " set to: " << value << "\n";}
+	if (!e) {return -1;} 
+	return value;
 }
 
-int set_dac_voltage(int channel, double voltage) {	
+//set voltage from dac
+//params: int channel(1-4,ALL), double value(0V-10V)
+//return: bool error
+double set_dac_voltage(int channel, double voltage) {	
 	int value = voltage * 4096 / 2 / 5;
 	set_dac_value(channel, value);
 	
-	return 1;
+	return value * 5 * 2 / 4096;						//afrondingsfouten voorkomen
 }
 
-int get_adc_value(int channel) {
+//get value from dac
+//params: int channel(1-4,ALL), bool testpunt: hoog zetten als je de spanning op de DUT wil meten 
+//			& laag voor diff over de digipot (standaard)
+//return: integer value(0-1023)
+int get_adc_value(int channel, bool testpunt = 0) {
+	bool e = 1;
 	channel &= 0b00000011;					//beveiliging tegen verkeerde input
-	unsigned char c[2] = {					//data request opstellen
-		0b00000100,
-		0b00000000
-	};					
-	c[0] += (channel<<4);
-
-	send_data(ADC, c, 2);
+	unsigned char c[2];
+	if(testpunt == 1) {
+		c[0] = 0b11001100;
+		c[0] += (channel<<4);
+		c[1] = 0b00000000;
+	}
+	else {					
+		c[0] = 0b00000100;
+		c[0] += (channel<<4);
+		c[1] = 0b00000000;
+	}				
+	
+	e &= send_data(ADC, c, 2);
 	while(!digitalRead(busy.gpio)) {}
 	c[0] = 0x00;
 	c[1] = 0x00;	
-	send_data(ADC, c, 2);				
+	e &= send_data(ADC, c, 2);				
 	
 	int i = (c[0] << 4) + (c[1] >> 4);
 	if (i >= 2048) {
 		i -= 4096;
 	}
-    std::cout << "ADC channel " << channel << "  data returned: " << i << "\n"; 
+    if (DEBUG == 1 and testpunt == 1) {std::cout << "ADC DUT " << channel << "  data returned: " << i << "\n";}
+    if (DEBUG == 1 and testpunt == 0) {std::cout << "ADC DUT " << channel << "  data returned: " << i << "\n";}
 	return i;
 }
 
-double get_adc_voltage(int channel) {
-	double d = get_adc_value(channel);
-	d = d * 20 / 4096;
+//get voltage from dac
+//params: int channel(1-4,ALL), bool testpunt: hoog zetten als je de spanning op de DUT wil meten 
+//			& laag voor diff over de digipot (standaard)
+//return: double value(0V-10V)
+double get_adc_voltage(int channel, bool meetpin = false) {
+	double d = get_adc_value(channel, meetpin);
+	if(meetpin == 1) {
+		d = d * 10 / 4096;
+	}
+	else {
+		d = d * 20 / 4096;
+	}
 	
+	if (DEBUG) {std::cout << "ADC channel " << channel << "  data voltage returned: " << d << "\n";}
 	return d;
 }
 
+//get current from dac
+//params: int channel(1-4,ALL)
+//return: double cuurent
 double get_current(int channel) {
-	double current = get_adc_voltage(channel) / (8 + DigiPot_value[channel] * 39.0625);
+	double current = get_adc_voltage(channel) / ((DigiPot_value[channel] * 10000 / 256) + 150);
 	
+	if (DEBUG) {std::cout << "channel " << channel << "  data current returned: " << current << "\n";}
 	return current;
 }
 
+//set value for DigiPots
+//params: int channel(1-3), uchar value(0-255)
+//return: bool error
 int set_digipot(int channel, unsigned char value) {
-	std::cout << "digipot " << channel << " set to: " << (int)value << "\n"; 
+	bool e = 1;
 	channel &= 0b00000011;						//beveiliging tegen verkeerde input => fout er zijn maar drie kanalen
 	DigiPot_value[channel] = value;
-	send_data(DigiPot1 + channel, &value, 1);
+	e &= send_data(DigiPot1 + channel, &value, 1);
 
-	
+	if(DEBUG) {std::cout << "digipot " << channel << " set to: " << DigiPot_value[channel] << "\n";}
 	return value;
 }
 
-int set_switch(int channel, bool value) {
+//set switch open/close
+//params: int channel(1-3), bool value(0,1)
+//return: bool value
+bool set_switch(int channel, bool value) {
 	if (channel == ALL_CHANNELS) {						//om alle kanalen in 1 keer open of gesloten te zetten
 		for(int i = 0; i<3; i++) {
 			set_switch(i,!value);						//recursief alle drie de kanalen overlopen
@@ -220,6 +270,7 @@ int set_switch(int channel, bool value) {
 		digitalWrite(switches[channel].gpio, !value);	//kanaal per kanaal gaan bedienen
 	}													
 	
+	if(DEBUG) {std::cout << "switch " << channel << " set to: " << (int)value << "\n";}
 	return value;
 }
 
@@ -232,9 +283,9 @@ int main(int argc, char **argv) {
 	while(1){
 		//test digipots
 		
-		set_digipot(CHANNEL1, 128);
-		set_digipot(CHANNEL2, 128);
-		set_digipot(CHANNEL3, 128);
+		set_digipot(CHANNEL1, 255);
+		set_digipot(CHANNEL2, 255);
+		set_digipot(CHANNEL3, 255);
 		t++;
 		if (t==256) { t=0;}
 		//delay(100);
@@ -242,7 +293,7 @@ int main(int argc, char **argv) {
 		
 		//test switch
 		
-		set_switch(CHANNEL1, FALSE);
+		set_switch(CHANNEL1, TRUE);
 		set_switch(CHANNEL2, TRUE);
 		set_switch(CHANNEL3, TRUE);
 		/*
@@ -255,16 +306,22 @@ int main(int argc, char **argv) {
 		
 		//test DAC
 		
-		set_dac_value(CHANNEL1, 1024);
-		set_dac_value(CHANNEL2, 1024);
+		set_dac_value(CHANNEL1, 3072);
+		set_dac_value(CHANNEL2, 2048);
 		set_dac_value(CHANNEL3, 1024);
 		
 		
 		//test ADC
 		
-		get_adc_value(CHANNEL1);
-		get_adc_value(CHANNEL2);
-		get_adc_value(CHANNEL3);
+		get_adc_voltage(CHANNEL1);
+		get_adc_voltage(CHANNEL2);
+		get_adc_voltage(CHANNEL3);
+		get_adc_voltage(CHANNEL1,1);
+		get_adc_voltage(CHANNEL2,1);
+		get_adc_voltage(CHANNEL3,1);
+		get_current(CHANNEL1);
+		get_current(CHANNEL2);
+		get_current(CHANNEL3);
 		delay(250);
 		
 	}
