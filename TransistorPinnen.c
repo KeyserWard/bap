@@ -4,7 +4,6 @@
 #define R_W 50		//in ohm
 #define R_AB 10000	//in ohm
 
-
 bool chose_config(const char* configuratie, int channel) {	// returnt true als de cofiguratie correct is doorgegeven
 	if(!strcmp(configuratie, "Open")){				
 		set_switch(channel, false);
@@ -13,13 +12,13 @@ bool chose_config(const char* configuratie, int channel) {	// returnt true als d
 		
 	else if(!strcmp(configuratie, "Vcc")){
 		set_switch(channel, true);
-		set_dac_voltage(channel, 4);	//Vcc = 12V
+		set_dac_voltage_offset(channel, 4);	//Vcc = 9V
 		return true;
 	}
 	
 	else if(!strcmp(configuratie, "Ground")){
 		set_switch(channel, true);
-		set_dac_voltage(channel, 0);		//Ground = 0V
+		set_dac_voltage_offset(channel, 0);		//Ground = 5V
 		return true;
 	} 
 	else{
@@ -127,15 +126,19 @@ void locate_collector_emitter(Transistor* transistor){
 	}
 	collectorIndex = (basisIndex + 1) %3;
 	emitterIndex = 	(basisIndex + 2) %3;											
-
-	chose_config("Vcc", transistor->basisGateChannel);	
+	if(strcmp(transistor->type,"NPN"))
+		chose_config("Vcc", transistor->basisGateChannel);	
+	else
+		chose_config("Ground", transistor->basisGateChannel);	
+	
 	chose_config("Vcc", channels[collectorIndex]);		
 	chose_config("Ground", channels[emitterIndex]);		
-	meting = get_current(channels[emitterIndex]); 			// double measure_current(int pin) dus stroom meten door de pin van de emitter											
+	meting = get_current(channels[emitterIndex]); 	
+														
 	chose_config("Ground", channels[collectorIndex]);		
 	chose_config("Vcc", channels[emitterIndex]);		
 	
-	if(meting <  get_current(channels[collectorIndex])){
+	if(meting >  get_current(channels[emitterIndex]) && strcmp(transistor->type,"NPN") || meting >  get_current(channels[emitterIndex]) && strcmp(transistor->type,"PNP")){
 		//de 2 GES met elkaar vergelijken
 		transistor->collectorDrainChannel = channels[collectorIndex];		//GES in eerste situatie
 		transistor->emitterSourceChannel = channels[emitterIndex];			
@@ -145,3 +148,5 @@ void locate_collector_emitter(Transistor* transistor){
 	}
 	
 }
+
+
