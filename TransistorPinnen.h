@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-
+//#include "SPI-GPIO.h"
 
 
 typedef struct{
@@ -19,9 +19,7 @@ bool chose_config(const char*, int);
 
 bool locate_base(Transistor*);
 
-double measure_current(int);
-
-void zet_potwaarde(int, int);
+double Weerstand(int, int);
 
 int stroom_door_pin(int);
 
