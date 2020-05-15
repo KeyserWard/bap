@@ -131,11 +131,11 @@ void locate_collector_emitter(Transistor* transistor){
 	chose_config("Vcc", transistor->basisGateChannel);	
 	chose_config("Vcc", channels[collectorIndex]);		
 	chose_config("Ground", channels[emitterIndex]);		
-	meting = measure_current(channels[emitterIndex]); 			// double measure_current(int pin) dus stroom meten door de pin van de emitter											
+	meting = get_current(channels[emitterIndex]); 			// double measure_current(int pin) dus stroom meten door de pin van de emitter											
 	chose_config("Ground", channels[collectorIndex]);		
 	chose_config("Vcc", channels[emitterIndex]);		
 	
-	if(meting <  measure_current(channels[collectorIndex])){
+	if(meting <  get_current(channels[collectorIndex])){
 		//de 2 GES met elkaar vergelijken
 		transistor->collectorDrainChannel = channels[collectorIndex];		//GES in eerste situatie
 		transistor->emitterSourceChannel = channels[emitterIndex];			
