@@ -13,7 +13,7 @@ bool chose_config(const char* configuratie, int channel) {	// returnt true als d
 		
 	else if(!strcmp(configuratie, "Vcc")){
 		set_switch(channel, true);
-		set_dac_voltage(channel, 12);	//Vcc = 12V
+		set_dac_voltage(channel, 4);	//Vcc = 12V
 		return true;
 	}
 	
