@@ -83,7 +83,7 @@ bool set_spi (int device) {
 	digitalWrite(convst.gpio, HIGH);					//hangt samen met RD voor ADC
 	
 	if (0 <= device && device <= AANTAL_SPI_DEVICES) {	//actieve CS hoog zetten, tenzij RESET (=0)
-		if (device == RESET) {return 1;}					//reset, niets anders laag zetten
+		if (device == RESET) {return 1;}				//reset, niets anders laag zetten
 		digitalWrite(spi_devices[device].gpio, LOW);	//devise_CS laag zetten
 		if (device == ADC) {							//indien adc ook convst hangt samen met RD
 			digitalWrite(convst.gpio, LOW);
@@ -183,6 +183,16 @@ double set_dac_voltage(int channel, double voltage) {
 	return value * 5 * 2 / 4096;						//afrondingsfouten voorkomen
 }
 
+//set voltage from dac
+//params: int channel(1-4,ALL), double value(-5Vtot+5V)
+//return: bool error
+double set_dac_voltage_offset(int channel, double voltage) {	
+	int value = (voltage + 5) * 4096 / 2 / 5;
+	set_dac_value(channel, value);
+	
+	return (value - 5) * 5 * 2 / 4096;						//afrondingsfouten voorkomen
+}
+
 //get value from dac
 //params: int channel(1-4,ALL), bool testpunt: hoog zetten als je de spanning op de DUT wil meten 
 //			& laag voor diff over de digipot (standaard)
@@ -212,8 +222,10 @@ int get_adc_value(int channel, bool testpunt = 0) {
 	if (i >= 2048) {
 		i -= 4096;
 	}
-    if (DEBUG == 1 and testpunt == 1) {std::cout << "ADC DUT " << channel << "  data returned: " << i << "\n";}
-    if (DEBUG == 1 and testpunt == 0) {std::cout << "ADC DUT " << channel << "  data returned: " << i << "\n";}
+	if (DEBUG) {
+		if ( testpunt) {std::cout << "ADC DUT " << channel << "  data returned: " << i << "\n";}
+		if (!testpunt) {std::cout << "ADC DUT " << channel << "  data returned: " << i << "\n";}
+	}
 	return i;
 }
 
