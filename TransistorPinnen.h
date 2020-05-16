@@ -1,10 +1,13 @@
 //TransistorPinnen.h
 
+#ifndef TRANSISTORPINNEN_H
+#define TRANSISTORPINNEN_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include "TransistorTester_V3.1.h"
+#include "TransistorTester.h"
 
 typedef struct{
 	int basisGateChannel;
@@ -24,3 +27,5 @@ double Weerstand(int, int);
 int stroom_door_pin(int);
 
 void locate_collector_emitter(Transistor*);
+
+#endif
