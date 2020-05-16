@@ -120,16 +120,7 @@ bool locate_base(Transistor *trans)
 	{
 		return false; //false wanneer geen basis of type gevonden is, dus transistor is defect
 	}
-}
-
-double Weerstand(int channel, int R_WB)
-{
-	double weerstandEff;
-	unsigned char value;
-	value = (R_WB - 3 * R_W) * 256 / R_AB; //STROOM DOOR DE PINNEN MOGEN NIET GROTER DAN 5mA
-										   //R_WB =	D/256*R_AB + 3*R_W
-	set_digipot(channel, value);
-	return weerstandEff;
+	return false;
 }
 
 void locate_collector_emitter(Transistor *transistor)
@@ -158,7 +149,7 @@ void locate_collector_emitter(Transistor *transistor)
 	chose_config("Ground", channels[collectorIndex]);
 	chose_config("Vcc", channels[emitterIndex]);
 
-	if (meting > get_current(channels[emitterIndex]) && strcmp(transistor->type, "NPN") || meting > get_current(channels[emitterIndex]) && strcmp(transistor->type, "PNP"))
+	if ((meting > get_current(channels[emitterIndex]) && strcmp(transistor->type, "NPN")) || (meting > get_current(channels[emitterIndex]) && strcmp(transistor->type, "PNP")))
 	{
 		//de 2 GES met elkaar vergelijken
 		transistor->collectorDrainChannel = channels[collectorIndex]; //GES in eerste situatie
