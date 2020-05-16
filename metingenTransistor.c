@@ -1,11 +1,10 @@
 //metingen
 #include "metingenTransistor.h"
 
-void meting_IC_VCE(Transistor *trans, double IB, double ***data, int dataLen)
+void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_VCE, int dataLen)
 {					//dataLen zijn het aantal coordinaten, double data[dataLen][2]
 	double VCE, IC; //VCE kan niet groter worden dan 4!
 	int RB, i;
-	double punt[2] = {0, 0};
 	for (i = 0; i < dataLen; i++)
 	{
 
@@ -31,18 +30,17 @@ void meting_IC_VCE(Transistor *trans, double IB, double ***data, int dataLen)
 			set_dac_voltage_offset(trans->basisGateChannel, VCE); //VBE = VCE
 
 			//IC opmeten
-			punt[0] = (double)get_adc_voltage(trans->collectorDrainChannel, true) - get_adc_voltage(trans->emitterSourceChannel, true); //VCE controle
-			punt[1] = (double)get_current(trans->collectorDrainChannel);
+			data_VCE[i] = (double)get_adc_voltage(trans->collectorDrainChannel, true) - get_adc_voltage(trans->emitterSourceChannel, true); //VCE controle
+			data_IC[i] = (double)get_current(trans->collectorDrainChannel);
 		}
 		else
 		{
-			punt[0] = VCE;
-			punt[1] = 0;
+			data_VCE[i] = VCE;
+			data_IC[i] = 0;
 		}
 
-		*data[i] = punt;
-		punt[0] = 0;
-		punt[1] = 0;
+		data_VCE[i] = 0;
+		data_IC[i] = 0;
 	}
 }
 
