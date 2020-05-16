@@ -1,20 +1,30 @@
+# Imports voor het maken van het venster
 from tkinter import ttk
 import tkinter as tk
 from PIL import ImageTk, Image
 
+# Imports voor het maken van grafieken
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib import style
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import matplotlib
 
 import random
-import threading
+import numpy as np
 import csv
 import os
+from cffi import FFI
 
+# Import van ander document
 import saveCSV
+import Transistor
+
+# Importeren C-bestanden en maken van transistor struct
+ffi = FFI()
+ffi.cdef("void meting_IC_VCE(Transistor*, double, double*, double*, int);")
+metingenTransistor = ffi.dlopen("metingenTransistor.so")
+TransistorStruct = Transistor.getStructTransistor()
+
 
 style.use("ggplot")
 
@@ -37,27 +47,39 @@ def rand(start, end, num):
 
 # In deze functie moet een onderscheid gemaakt worden tussen BJT en MOSFET
 def load(controller):
-    layout = ["C", "B", "E"]
-    transistorTypes = ["BJT NPN", "BJT PNP", "MOSFET n-channel enhancement", "MOSFET p-channel enhancement", "MOSFET n-channel depletion", "MOSFET p-channel depletion"]
-    thread = threading.Thread(target=app.getInfo)     # Hier moet een functie komen die de gemeten waarden doorgeeft
-    thread.start()
+    global ffi
+    global TransistorStruct
+    global metingenTransistor
+
+    # transistorTypes = ["BJT NPN", "BJT PNP", "MOSFET n-channel enhancement", "MOSFET p-channel enhancement", "MOSFET n-channel depletion", "MOSFET p-channel depletion"]
 
     # Pinlayout
-    choice = random.choice(layout)
-    app.pin1.set(choice)
-    layout.remove(choice)
-    choice = random.choice(layout)
-    app.pin2.set(choice)
-    layout.remove(choice)
-    app.pin3.set(layout[0])
+    layout = Transistor.getPinLayout(TransistorStruct)
+    if(lent(layout) == 0):
+        controller.show_frame(DefectPage)
+    else:
+        datalen = 20
+        IB = 50e-6  # in mA
+        app.I_C2 = np.zeros(datalen)
+        app.V_CE = np.zeros(datalen)
+        C_IC = ffi.cast("double *", (app.I_C2).ctypes.data)
+        C_VCE = ffi.cast("double *", (app.V_CE).ctypes.data)
 
-    app.updatePlot(app.plot1, [1, 2, 3, 4, 5, 6, 7, 8, 9], app.hfe, "IC", "hfe")
-    app.updatePlot(app.plot2, [1, 2, 3, 4, 5, 6, 7, 8, 9], app.V_CE, "IC", "hfe")
+        metingenTransistor.meting_IC_VCE(TransistorStruct, IB, C_IC, C_VCE, dataLen)
+        transType = Transistor.getType(TransistorStruct)
+    
+        app.pin1.set(layout[0])
+        app.pin2.set(layout[1])
+        app.pin3.set(layout[2])
+        app.transType.set(transType)
 
-    thread.join()
+        app.updatePlot(app.plot1, [1, 2, 3, 4, 5, 6, 7, 8, 9], app.hfe, "IC", "hfe")
+        app.updatePlot(app.plot2, app.I_C2, app.V_CE, "IC", "VCE")
+    
+    
     print("Pressed start\t", app.hfe, app.V_CE)
     kapot = random.randrange(0, 10)
-    transistorType = random.choice(transistorTypes)
+    transistorType = transistorTypes[0]
 
     if (kapot < 9):
         if (transistorType == "BJT NPN" or transistorType == "BJT PNP"):
@@ -67,7 +89,7 @@ def load(controller):
             controller.show_frame(InfoPageMOSFET)
         app.transType.set(transistorType)
     else:
-        controller.show_frame(BrokePage)
+        controller.show_frame(DefectPage)
 
 
 class Transistortester(tk.Tk):
@@ -81,12 +103,14 @@ class Transistortester(tk.Tk):
     V_BE = 0
 
     # Graph 1
-    hfe = 9*[2]
+    hfe = np.zeros(9)
+    I_C1 = np.zeros(9)
     fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
     plot1 = fig1.add_subplot(111)
 
     # Graph 2
-    V_CE = 9*[2]
+    V_CE = np.zeros(9)
+    I_C2 = np.zeros(9)
     fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
     plot2 = fig2.add_subplot(111)
 
@@ -124,7 +148,7 @@ class Transistortester(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, HelpPage, BrokePage, InfoPageBJT, InfoPageMOSFET, Graph1PageBJT, Graph2PageBJT):
+        for F in (StartPage, HelpPage, DefectPage, InfoPageBJT, InfoPageMOSFET, Graph1PageBJT, Graph2PageBJT):
             frame = F(self.canvas, self)
             self.frames[F] = frame
             frame.place(relx=0.05, rely=0.05, relwidth=0.9, relheight=0.9)
@@ -195,7 +219,7 @@ class HelpPage(tk.Frame):
         panel.place(relx=0.35, rely=0.4, relwidth=0.3, relheight=0.5)
 
 
-class BrokePage(tk.Frame):
+class DefectPage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg=MAIN_COLOR)
