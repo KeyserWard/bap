@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-//#include "SPI-GPIO.h"
+#include "TransistorTester_V3.1.h"
 
 typedef struct{
 	int basisGateChannel;

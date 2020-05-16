@@ -1,5 +1,4 @@
 #include "TransistorPinnen.h"
-#include "TransistorTester_V3.1.h"
 
 #define R_W 50	   //in ohm
 #define R_AB 10000 //in ohm

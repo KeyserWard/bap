@@ -1,7 +1,6 @@
 //metingenTransistor header
 
 #include "TransistorPinnen.h"
-#include "TransistorTester_V3.1.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdbool.h>
