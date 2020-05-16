@@ -75,6 +75,7 @@ bool locate_base(Transistor *trans)
 		*/
 	}
 	//zoeken naar de basis
+	trans->structuur = "BJT";
 	for (i = 0; i < 6; i++)
 	{
 		for (j = 0; j < 3; j++)
@@ -118,7 +119,7 @@ bool locate_base(Transistor *trans)
 	}
 	if (trans->basisGateChannel == -1 || strcmp(trans->type, "Onbepaald"))
 	{
-		return false; //false wanneer de geen basis of type gevonden is, dus transistor is defect
+		return false; //false wanneer geen basis of type gevonden is, dus transistor is defect
 	}
 }
 
