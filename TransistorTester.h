@@ -1,5 +1,12 @@
 //header for code hardware
+
+#ifndef TRANSISTORTESTER_H
+#define TRANSISTORTESTER_H
+
+
 //#include <iostream>
+#include <stdio.h>
+#include <stdbool.h>
 #include <wiringPi.h>
 #include <wiringPiSPI.h>
 
@@ -60,6 +67,11 @@ static switch_id switches[3] = {	//actief laag
 	{CHANNEL3,	38,		28}
 };
 
+typedef struct {
+	int pin;		//pin-nummer op 40-pins connector
+	int gpio;		//gpio pin-nummer
+} pin;
+
 int DigiPot_value[3];
 
 _Bool set_spi (int );
@@ -68,11 +80,11 @@ _Bool send_data(int, unsigned char[], int);
 
 _Bool setup_hardware();
 
-_Bool set_dac_value(unsigned char, int);
+int set_dac_value(unsigned char, int);
 
-_Bool set_dac_voltage(int, double);
+double set_dac_voltage(int, double);
 
-_Bool set_dac_voltage_offset(int, double);
+double set_dac_voltage_offset(int, double);
 
 int get_adc_value(int, _Bool);
 
@@ -84,3 +96,5 @@ int set_digipot(int, unsigned char);
 int set_digipot_resistance(int, int);
 
 _Bool set_switch(int, _Bool);
+
+#endif
