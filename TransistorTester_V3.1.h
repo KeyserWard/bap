@@ -74,9 +74,9 @@ _Bool set_dac_voltage(int, double);
 
 _Bool set_dac_voltage_offset(int, double);
 
-int get_adc_value(int);
+int get_adc_value(int, _Bool);
 
-double get_adc_voltage(int);
+double get_adc_voltage(int, _Bool);
 
 double get_current(int);
 
