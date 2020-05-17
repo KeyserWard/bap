@@ -74,4 +74,4 @@ bool set_switch(int, bool);
 
 bool setup_hardware();
 
-#ENDIF
+#endif

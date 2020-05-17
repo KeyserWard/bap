@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import random
 import numpy as np
 import csv
-import os
 from cffi import FFI
 
 # Import van ander document
@@ -22,7 +21,7 @@ import Transistor
 # Importeren C-bestanden en maken van transistor struct
 ffi = FFI()
 ffi.cdef("void meting_IC_VCE(Transistor*, double, double*, double*, int);")
-metingenTransistor = ffi.dlopen("metingenTransistor.so")
+metingenTransistor = ffi.dlopen(os.getcwd() + "/metingenTransistor.so")
 TransistorStruct = Transistor.getStructTransistor()
 
 
@@ -76,7 +75,7 @@ def load(controller):
         app.updatePlot(app.plot1, [1, 2, 3, 4, 5, 6, 7, 8, 9], app.hfe, "IC", "hfe")
         app.updatePlot(app.plot2, app.I_C2, app.V_CE, "IC", "VCE")
     
-    
+
     print("Pressed start\t", app.hfe, app.V_CE)
     kapot = random.randrange(0, 10)
     transistorType = transistorTypes[0]

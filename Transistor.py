@@ -1,5 +1,8 @@
+import os
 from cffi import FFI
 ffi = FFI()
+
+print(os.getcwd() + "/TransistorBreadboard.png")
 
 ffi.cdef("""
         typedef struct {
@@ -15,7 +18,7 @@ ffi.cdef("""
         """
     )
 
-TransistorPin = ffi.dlopen("TransistorPinnen.so")
+TransistorPin = ffi.dlopen(os.getcwd() + "/TransistorPinnen.so")
 
 def getStructTransistor():
     global ffi

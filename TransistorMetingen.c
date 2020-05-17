@@ -15,7 +15,7 @@ void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_V
 					//IB in mA
 {					//dataLen zijn het aantal coordinaten, double data[dataLen][2]
 	double VCE, IC; //VCE kan niet groter worden dan 4!
-	
+	//test
 	double RB, VB, VBE;
 	if (IB <= 0.01) {		//IB stroom tss 10uA en 1uA
 		RB = 10 / IB;
