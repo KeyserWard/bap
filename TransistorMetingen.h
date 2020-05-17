@@ -11,7 +11,7 @@
 #include <string.h>
 #include <math.h>
 
-double meting_VBE(Transistor, double, int);
+double meting_VBE(Transistor*, double, int);
 
 void meting_IC_VCE(Transistor*, double, double*, double*, int);
 
