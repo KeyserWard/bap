@@ -2,10 +2,11 @@
 #include "TransistorMetingen.h"
 
 double meting_VBE(Transistor *trans, double VB, int RB) {
+	int w;
 	set_dac_voltage_offset(trans->emitterSourceChannel, 0);
 	set_digipot_resistance(trans->basisGateChannel, RB);
 	set_dac_voltage_offset(trans->basisGateChannel, VB);
-	int w;
+
 	for(w=0;w<1000000;w++){}
 	double VBE = get_adc_voltage(trans->basisGateChannel, 1) - get_adc_voltage(trans->emitterSourceChannel, 1);
 	return VBE;
@@ -15,19 +16,20 @@ void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_V
 					//IB in mA
 {					//dataLen zijn het aantal coordinaten, double data[dataLen][2]
 	double VCE, IC; //VCE kan niet groter worden dan 4!
-	//test
-	double RB, VB, VBE;
-	if (IB <= 0.01) {		//IB stroom tss 10uA en 1uA
+	double RB, VB, VBE, ib;
+	int w, i;
+	//fabs() zodat IB negatief kan zijn voor PNP
+	if (fabs(IB) <= 0.01) {		//IB stroom tss 10uA en 1uA
 		RB = 10 / IB;
 		VBE = meting_VBE(trans, 0.6, RB);
 		VB = 0.1 + VBE;
 	}			
-	else if (IB <= 0.05) {	//IB stroom tss 10uA en 50uA
+	else if (fabs(IB) <= 0.05) {	//IB stroom tss 10uA en 50uA
 		RB = 100 / IB;
 		VBE = meting_VBE(trans, 0.6, RB);
 		VB = 0.1 + VBE;
 	}		
-	else if (IB <= 0.5) {	//IB stroom tss 50uA en 500uA
+	else if (fabs(IB) <= 0.5) {	//IB stroom tss 50uA en 500uA
 		RB = 500 / IB;
 		VBE = meting_VBE(trans, 1.1, RB);
 		VB = 0.5 + VBE;
@@ -49,26 +51,26 @@ void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_V
 	
 	set_dac_voltage_offset(trans->emitterSourceChannel, 0);
 		
-	int i;
+
 	for (i = 0; i < dataLen; i++)
 	{
-		VCE = (double)(i * 4.0) / dataLen;		
+		VCE = (double)(i * 4) / dataLen;		
 		
 		//VCE inverteren als de bjt een pnp is
 		if (!strcmp(trans->type, "PNP")) { VCE *= -1; }
 		
 		//IC in mA (RE + RC = 4KOhm)
-		IC = VCE / 1.000; 
+		IC = VCE / 1.000; //??
 		
-		if (IC <= 5 && IC >= -5)	//beveiliging (theoretisch)
+		if (fabs(IC) <= 5)	//beveiliging (theoretisch)
 		{ // -5 <= IC <= 5
 			set_dac_voltage_offset(trans->collectorDrainChannel, VCE);	
 			
-			int w;
+			
 			for(w=0;w<1000000;w++){}
 			
 			//IB controleren
-			double ib = get_current(trans->basisGateChannel);
+			ib = get_current(trans->basisGateChannel);
 			printf("IB = %fmA\t",ib*1000);
 
 			
@@ -82,83 +84,119 @@ void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_V
 			data_VCE[i] = VCE;
 			data_IC[i] = 0;
 		}
-
-		//data_VCE[i] = 0;
-		//data_IC[i] = 0;
 	}
 }
 
-void meting_beta_IC(Transistor *trans, double ***data, int dataLen)
+void meting_beta_IC(Transistor *trans, double *data_IC, double *data_beta, int dataLen)
 { //dataLen zijn het aantal coordinaten, double data[dataLen][2]
-	double punt[2] = {0, 0};
-	int RC, RB, VCE, i;
+	int RC, RB, VCE, i, w;
 	double Ic; //Ic in mA
+	VCE = 4;
 	for (i = 0; i < dataLen; i++)
 	{
-		Ic = i / 4;
+		Ic = (double) i * 4 / dataLen; //Ic mag niet groter worden dan 5mA => vandaar max 4mA ter beveiliging
 
 		//bepaling npn of pnp
 		if (!strcmp(trans->type, "PNP"))
 			Ic *= -1;
+			VCE *= -1;
 
 		//Ic op het bord zetten en punt invullen
-		if (Ic >= 5 || Ic == 0)
+		if (fabs(Ic) >= 5 || Ic == 0)
 		{
-			punt[0] = Ic;
-			punt[1] = 0;
+			data_IC[i] = Ic;
+			data_beta[i] = 0;
 		}
 		else
 		{
-			if (Ic > 0 && Ic <= 2.5)
+			
+			RC = (int) VCE / Ic;		//RC in Kohm
+			RB = RC;			
+			set_digipot_resistance(trans->collectorDrainChannel, RC);
+			set_digipot_resistance(trans->basisGateChannel, RB);
+			set_digipot_resistance(trans->emitterSourceChannel, RC);
+			
+			/*
+			if (fabs(Ic) > 0 && fabs(Ic) <= 2)
 			{
-				VCE = 2000 * Ic;
+				VCE = 2 * Ic;								//VCE is max 4V
 				set_digipot_resistance(trans->collectorDrainChannel, 2000);
 			}
-			else if (Ic > 2.5 && Ic < 5)
+			else if (fabs(Ic) > 2 && fabs(Ic) <= 4)
 			{
-				VCE = 1000 * Ic;
-				set_digipot_resistance(trans->collectorDrainChannel, 2000);
+				VCE = 1 * Ic;								//VCE is max 4V
+				set_digipot_resistance(trans->collectorDrainChannel, 1000);
 			}
+			*/
 			set_dac_voltage_offset(trans->collectorDrainChannel, VCE);
 			set_dac_voltage_offset(trans->basisGateChannel, VCE);
 			set_dac_voltage_offset(trans->emitterSourceChannel, 0);
-			punt[0] = get_current(trans->collectorDrainChannel);
-			punt[1] = punt[0] / get_current(trans->basisGateChannel);
+			
+			for(w=0;w<1000000;w++){}
+			
+			data_IC[i] = get_current(trans->collectorDrainChannel);
+			data_beta[i] = (double) data_IC[i] / get_current(trans->basisGateChannel);
 		}
-		*data[i] = punt;
-		punt[0] = 0;
-		punt[1] = 0;
+		
 	}
 }
 
+void meting_IC_VBE(Transistor *trans, double VCB, double *data_IC, double *data_VBE, int dataLen){
+	int i, w;
+	double VB, VC;
+	int RB;
+	
+	set_digipot_resistance(trans->collectorDrainChannel, 500); //VC mag max 4V zijn en IC max 5mA => RC = 800Ohm
+	set_digipot_resistance(trans->emitterSourceChannel, 500);
+	
+	for(i=0; i<dataLen; i++){
+		
+		VB = (double) i*4 / dataLen;
+		data_VBE[i] = meting_VBE(trans, VB ,RB);
+		set_dac_voltage_offset(trans->emitterSourceChannel, 0); // Moet mogelijk niet aangezien dat dit al gebeurd in meting_VBE
+		set_dac_voltage_offset(trans->basisGateChannel, VB);	//	idem
+		VC = VB - VCB;
+
+		set_dac_voltage_offset(trans->collectorDrainChannel, VC);
+		
+		for(w=0;w<1000000;w++){}
+		
+		data_IC[i] = get_current(trans->emitterSourceChannel);
+	}
+	
+}
+
+
 int main(int argc, char **argv){		//testomgeving
 	setup_hardware();
-
+	double IC[100];
+	double VCE[100];
+	double IB;
+	int a;
 	Transistor T;
 	locate_base(&T);
 	locate_collector_emitter(&T);
 	printf("transistor:\n\tcollector:\t%d\n\temitor:\t\t%d\n\tbasis:\t\t%d\n\ttype:\t\t%s\n", T.collectorDrainChannel, T.emitterSourceChannel, T.basisGateChannel, T.type);
-	double IC[100];
-	double VCE[100];
-	double IB = 0.025; //10uA
+
+	IB = 0.025; //10uA
 	printf("press key to continue\n");
 	getchar();
 	meting_IC_VCE(&T, IB, IC, VCE, 100);
-	for(int a = 0; a<100;a++){
+	for(a = 0; a<100;a++){
 		printf("%d,%f,%f\n", a, IC[a], VCE[a]);
 	}
 	IB = 0.075; //5uA
 	printf("press key to continue\n");
 	getchar();
 	meting_IC_VCE(&T, IB, IC, VCE, 100);
-	for(int a = 0; a<100;a++){
+	for(a = 0; a<100;a++){
 		printf("%d,%f,%f\n", a, IC[a], VCE[a]);
 	}
 	IB = 0.150; //10uA
 	printf("press key to continue\n");
 	getchar();
 	meting_IC_VCE(&T, IB, IC, VCE, 100);
-	for(int a = 0; a<100;a++){
+	for(a = 0; a<100;a++){
 		printf("%d,%f,%f\n", a, IC[a], VCE[a]);
 	}
 }
