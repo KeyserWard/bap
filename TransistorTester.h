@@ -1,14 +1,8 @@
 //header for code hardware
-
-#ifndef TRANSISTORTESTER_H
-#define TRANSISTORTESTER_H
-
-
-//#include <iostream>
 #include <stdio.h>
-#include <stdbool.h>
 #include <wiringPi.h>
 #include <wiringPiSPI.h>
+#include <stdbool.h>
 
 #define SPI_SPEED 1000000
 #define SPI_MODE_0 0
@@ -34,26 +28,7 @@
 
 #define R_SWITCH 8
 
-_Bool startUp;
-
-typedef struct {
-	int channel;
-	int pin;		//pin-nummer op 40-pins connector
-	int gpio;		//gpio pin-nummer
-	int speed;		//CLk Speed in Hz
-	int mode;		//MODE1-4
-} spi_device_id;
-
-static spi_device_id spi_devices [AANTAL_SPI_DEVICES] = {
-	{RESET,		-1,		-1,		-1,			-1},
-	{DAC,		7,		7,		1000000,	SPI_MODE_0},
-	{DigiPot1,	35,		24,	 	1000000, 	SPI_MODE_0},
-	{DigiPot2,	33,		23,	 	1000000, 	SPI_MODE_0},
-	{DigiPot3,	31,		22,		1000000, 	SPI_MODE_0},
-	{ADC,		29,		21,		1000000, 	SPI_MODE_0},
-	{LCD,		0,		0,		1000000,	SPI_MODE_0},
-	{TOUCHPAD,	0,		0,		1000000,	SPI_MODE_0}
-};
+#define DEBUG FALSE
 
 typedef struct {
 	int channel;	
@@ -67,18 +42,13 @@ static switch_id switches[3] = {	//actief laag
 	{CHANNEL3,	38,		28}
 };
 
-typedef struct {
-	int pin;		//pin-nummer op 40-pins connector
-	int gpio;		//gpio pin-nummer
-} pin;
-
 int DigiPot_value[3];
 
-_Bool set_spi (int );
 
-_Bool send_data(int, unsigned char[], int);
 
-_Bool setup_hardware();
+bool set_spi (int );
+
+bool send_data(int, unsigned char[], int);
 
 int set_dac_value(unsigned char, int);
 
@@ -86,15 +56,16 @@ double set_dac_voltage(int, double);
 
 double set_dac_voltage_offset(int, double);
 
-int get_adc_value(int, _Bool);
+int get_adc_value(int, bool);
 
-double get_adc_voltage(int, _Bool);
+double get_adc_voltage(int, bool);
 
 double get_current(int);
 
 int set_digipot(int, unsigned char);
+
 int set_digipot_resistance(int, int);
 
-_Bool set_switch(int, _Bool);
+bool set_switch(int, bool);
 
-#endif
+bool setup_hardware();
