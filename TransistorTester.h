@@ -1,4 +1,8 @@
 //header for code hardware
+
+#ifndef TRANSISTORTESTER_H
+#define TRANSISTORTESTER_H
+
 #include <stdio.h>
 #include <wiringPi.h>
 #include <wiringPiSPI.h>
@@ -69,3 +73,5 @@ int set_digipot_resistance(int, int);
 bool set_switch(int, bool);
 
 bool setup_hardware();
+
+#ENDIF
