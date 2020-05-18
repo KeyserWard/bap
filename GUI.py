@@ -26,9 +26,12 @@ MAIN_COLOR = "#e6f8ff"
 ACCENT_COLOR = "#ffeec2"
 HEIGHT = 480
 WIDTH = 800
+X = np.zeros(10)
+Y = np.zeros(10)
 
 
 def load(controller):
+    global X, Y
     # Pinlayout
     layout = Transistor.getPinLayout()
 
@@ -49,22 +52,22 @@ def load(controller):
         
         if(transStructuur == "BJT"):
             # Graph1: Beta in functie van I_C
-            app.I_C1 = np.zeros(dataLen)
-            app.Beta = np.zeros(dataLen)
+            app.I_C1.resize(dataLen)
+            app.Beta.resize(dataLen)
 
             Transistor.meting_Beta_IC(app.I_C1, app.Beta, dataLen)
 
             # Graph2: V_CE in functie van I_C
             IB = 50e-3  # in mA
-            app.I_C2 = np.zeros(dataLen)
-            app.V_CE = np.zeros(dataLen)
+            app.I_C2.resize(dataLen)
+            app.V_CE.resize(dataLen)
 
             Transistor.meting_IC_VCE(IB, app.I_C2, app.V_CE, dataLen)
 
             # Graph3: V_CE in functie van I_C
             VCB = 0.7  # in V
-            app.I_C3 = np.zeros(dataLen)
-            app.V_BE = np.zeros(dataLen)
+            app.I_C3.resize(dataLen)
+            app.V_BE.resize(dataLen)
 
             Transistor.meting_IC_VBE(VCB, app.I_C3, app.V_BE, dataLen)
 
@@ -72,6 +75,9 @@ def load(controller):
             app.updatePlot(app.BJTplot1, app.I_C1, app.Beta, "IC", "Beta")
             app.updatePlot(app.BJTplot2, app.I_C2, app.V_CE, "IC", "VCE")
             app.updatePlot(app.BJTplot3, app.I_C3, app.V_BE, "IC", "VCE")
+            print(app.I_C1)
+            print(app.I_C2)
+            print(app.I_C3)
 
             controller.show_frame(InfoPageBJT)
 
@@ -137,8 +143,6 @@ class Transistortester(tk.Tk):
         Transistortester.pin3.set("E")
         Transistortester.transType = tk.StringVar()
         Transistortester.transType.set("BJT NPN")
-        Transistortester.V_BE = tk.StringVar()
-        Transistortester.V_BE.set(str(0.635) + "V")
 
         # self.attributes('-fullscreen', True)      #full-screen windows
         self.canvas = tk.Canvas(self, height=HEIGHT, width=WIDTH, bg=MAIN_COLOR)
@@ -167,6 +171,7 @@ class Transistortester(tk.Tk):
         Graph1PageBJT.updateGraph()
         Graph2PageBJT.updateGraph()
         Graph3PageBJT.updateGraph()
+
 
 
 class StartPage(tk.Frame):
@@ -386,7 +391,6 @@ class Graph2PageBJT(tk.Frame):
 
     def updateGraph():
         Graph2PageBJT.canvas.draw()
-
 
 # I_C in functie van V_BE
 class Graph3PageBJT(tk.Frame):

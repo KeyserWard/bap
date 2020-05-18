@@ -25,9 +25,9 @@ ffi.cdef(
 TransistorSO = ffi.dlopen(os.path.abspath("TransistorMetingen.so"))
 Transistor = ffi.new("Transistor *")
 
+
 def getPinLayout():
-    global Transistor
-    global TransistorSO
+    global Transistor, TransistorSO
 
     layout = 3*[None]
 
@@ -60,13 +60,14 @@ def getType():
     global Transistor
     return ffi.string(Transistor.type).decode('UTF-8')
 
+
 def getStructuur():
     global Transistor
     return ffi.string(Transistor.structuur).decode('UTF-8')
 
+
 def meting_Beta_IC(data_IC, data_Beta, dataLen):
-    global Transistor
-    global TransistorSO
+    global Transistor, TransistorSO
 
     C_IC = ffi.cast("double *", (data_IC).ctypes.data)
     C_Beta = ffi.cast("double *", (data_Beta).ctypes.data)
@@ -75,9 +76,8 @@ def meting_Beta_IC(data_IC, data_Beta, dataLen):
 
 
 def meting_IC_VCE(IB, data_IC, data_VCE, dataLen):
-    global Transistor
-    global TransistorSO
-    
+    global Transistor, TransistorSO
+
     C_IC = ffi.cast("double *", (data_IC).ctypes.data)
     C_VCE = ffi.cast("double *", (data_VCE).ctypes.data)
 
@@ -85,11 +85,9 @@ def meting_IC_VCE(IB, data_IC, data_VCE, dataLen):
 
 
 def meting_IC_VBE(VCB, data_IC, data_VBE, dataLen):
-    global Transistor
-    global TransistorSO
+    global Transistor, TransistorSO
 
     C_IC = ffi.cast("double *", (data_IC).ctypes.data)
     C_VBE = ffi.cast("double *", (data_VBE).ctypes.data)
 
     TransistorSO.meting_IC_VBE(Transistor, VCB, C_IC, C_VBE, dataLen)
-    
