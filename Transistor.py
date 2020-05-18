@@ -4,27 +4,30 @@ ffi = FFI()
 
 print(os.getcwd() + "/TransistorBreadboard.png")
 
-ffi.cdef("""
-        typedef struct {
-            int basisGateChannel;
-            int collectorDrainChannel;
-            int emitterSourceChannel;
-            char* type;		//pnp of npn
-            char* structuur; //MOSFET of BJT
-        } Transistor;
+ffi.cdef(
+    """
+    typedef struct {
+        int basisGateChannel;
+        int collectorDrainChannel;
+        int emitterSourceChannel;
+        char* type;		//pnp of npn
+        char* structuur; //MOSFET of BJT
+    } Transistor;
 
-        bool locate_base(Transistor*);
-        void locate_collector_emitter(Transistor*);
-        """
-    )
+    bool locate_base(Transistor*);
+    void locate_collector_emitter(Transistor*);
+    """
+)
 
 TransistorPin = ffi.dlopen(os.getcwd() + "/TransistorPinnen.so")
 
+
 def getStructTransistor():
     global ffi
-    
-    Transistor = ffi.new("struct Transistor *")
+
+    Transistor = ffi.new("Transistor *")
     return Transistor
+
 
 def getPinLayout(Transistor):
     global TransistorPin
@@ -47,6 +50,7 @@ def getPinLayout(Transistor):
         layout[Transistor.emitterSourceChannel] = "S"
 
     return layout
+
 
 def getType(Transistor):
     return Transistor.structuur + " " + Transistor.type
