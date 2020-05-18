@@ -87,7 +87,7 @@ void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_V
 	}
 }
 
-void meting_beta_IC(Transistor *trans, double *data_IC, double *data_beta, int dataLen)
+void meting_Beta_IC(Transistor *trans, double *data_IC, double *data_beta, int dataLen)
 { //dataLen zijn het aantal coordinaten, double data[dataLen][2]
 	int RC, RB, VCE, i, w;
 	double Ic; //Ic in mA
