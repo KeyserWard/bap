@@ -6,7 +6,7 @@ import tkinter as tk
 # "C:\\Users\\maart\\Downloads"
 def saveCSV(x, y, xTitle, yTitle, filename):
     directoryUSB = os.listdir("/media/pi")
-    print(directoryUSB[0])
+    print(directoryUSB)
     if len(directoryUSB) > 0:
         directoryFiles = os.listdir("/media/pi/" + directoryUSB[0])
         print(directoryFiles)

@@ -16,31 +16,35 @@ ffi.cdef(
 
     bool locate_base(Transistor*);
     void locate_collector_emitter(Transistor*);
+    void meting_Beta_IC(Transistor*, double*, double*, int);
+    void meting_IC_VCE(Transistor*, double, double*, double*, int);
+    void meting_IC_VBE(Transistor*, double, double*, double *, int);
     """
 )
 
-TransistorPin = ffi.dlopen(os.getcwd() + "/TransistorPinnen.so")
+TransistorSO = ffi.dlopen(os.path.abspath("TransistorMetingen.so"))
+Transistor = ffi.new("Transistor *")
 
+def getPinLayout():
+    global Transistor
+    global TransistorSO
 
-def getStructTransistor():
-    global ffi
+    layout = 3*[None]
 
-    Transistor = ffi.new("Transistor *")
-    return Transistor
-
-
-def getPinLayout(Transistor):
-    global TransistorPin
-
-    layout = []
-
-    defect = TransistorPin.locate_base(Transistor)
+    defect = TransistorSO.locate_base(Transistor)
     if(defect):
         return layout
 
-    TransistorPin.locate_collector_emitter(Transistor)
+    TransistorSO.locate_collector_emitter(Transistor)
+    print(ffi.string(Transistor.structuur).decode('UTF-8'))
 
-    if(ffi.string(Transistor.structuur) == "BJT"):
+    if(ffi.string(Transistor.structuur).decode('UTF-8') == "BJT"):
+        print("Basis: ")
+        print(Transistor.basisGateChannel)
+        print("Collector: ")
+        print(Transistor.collectorDrainChannel)
+        print("Emitter: ")
+        print(Transistor.emitterSourceChannel)
         layout[Transistor.basisGateChannel] = "B"
         layout[Transistor.collectorDrainChannel] = "C"
         layout[Transistor.emitterSourceChannel] = "E"
@@ -52,5 +56,40 @@ def getPinLayout(Transistor):
     return layout
 
 
-def getType(Transistor):
-    return Transistor.structuur + " " + Transistor.type
+def getType():
+    global Transistor
+    return ffi.string(Transistor.type).decode('UTF-8')
+
+def getStructuur():
+    global Transistor
+    return ffi.string(Transistor.structuur).decode('UTF-8')
+
+def meting_Beta_IC(data_IC, data_Beta, dataLen):
+    global Transistor
+    global TransistorSO
+
+    C_IC = ffi.cast("double *", (data_IC).ctypes.data)
+    C_Beta = ffi.cast("double *", (data_Beta).ctypes.data)
+
+    TransistorSO.meting_Beta_IC(Transistor, C_IC, C_Beta, dataLen)
+
+
+def meting_IC_VCE(IB, data_IC, data_VCE, dataLen):
+    global Transistor
+    global TransistorSO
+    
+    C_IC = ffi.cast("double *", (data_IC).ctypes.data)
+    C_VCE = ffi.cast("double *", (data_VCE).ctypes.data)
+
+    TransistorSO.meting_IC_VCE(Transistor, IB, C_IC, C_VCE, dataLen)
+
+
+def meting_IC_VBE(VCB, data_IC, data_VBE, dataLen):
+    global Transistor
+    global TransistorSO
+
+    C_IC = ffi.cast("double *", (data_IC).ctypes.data)
+    C_VBE = ffi.cast("double *", (data_VBE).ctypes.data)
+
+    TransistorSO.meting_IC_VBE(Transistor, VCB, C_IC, C_VBE, dataLen)
+    

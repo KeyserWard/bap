@@ -9,7 +9,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib import style
 import matplotlib.pyplot as plt
 
-import random
 import numpy as np
 import os
 import csv
@@ -18,25 +17,6 @@ from cffi import FFI
 # Import van ander document
 import saveCSV
 import Transistor
-
-# Importeren C-bestanden en maken van transistor struct
-TransistorStruct = Transistor.getStructTransistor()
-ffi = FFI()
-ffi.cdef(
-    """
-    typedef struct {
-        int basisGateChannel;
-        int collectorDrainChannel;
-        int emitterSourceChannel;
-        char* type;		//pnp of npn
-        char* structuur; //MOSFET of BJT
-    } Transistor;
-    void meting_IC_VCE(Transistor*, double, double*, double*, int);
-    """
-)
-metingenTransistor = ffi.dlopen(os.getcwd() + "/TransistorMetingen.so")
-TransistorStruct = Transistor.getStructTransistor()
-
 
 style.use("ggplot")
 
@@ -48,60 +28,58 @@ HEIGHT = 480
 WIDTH = 800
 
 
-def rand(start, end, num):
-    res = []
-
-    for j in range(num):
-        res.append(random.randint(start, end))
-
-    return res
-
-
-# In deze functie moet een onderscheid gemaakt worden tussen BJT en MOSFET
 def load(controller):
-    global ffi
-    global TransistorStruct
-    global metingenTransistor
-
-    # transistorTypes = ["BJT NPN", "BJT PNP", "MOSFET n-channel enhancement", "MOSFET p-channel enhancement", "MOSFET n-channel depletion", "MOSFET p-channel depletion"]
-
     # Pinlayout
-    layout = Transistor.getPinLayout(TransistorStruct)
-    if(lent(layout) == 0):
-        controller.show_frame(DefectPage)
-    else:
-        datalen = 20
-        IB = 50e-6  # in mA
-        app.I_C2 = np.zeros(datalen)
-        app.V_CE = np.zeros(datalen)
-        C_IC = ffi.cast("double *", (app.I_C2).ctypes.data)
-        C_VCE = ffi.cast("double *", (app.V_CE).ctypes.data)
+    layout = Transistor.getPinLayout()
 
-        metingenTransistor.meting_IC_VCE(TransistorStruct, IB, C_IC, C_VCE, dataLen)
-        transType = Transistor.getType(TransistorStruct)
-    
+    if(None in layout):
+        controller.show_frame(DefectPage)
+
+    else:
+        # Bepalen transistortype
+        transType = Transistor.getType()
+        transStructuur = Transistor.getStructuur()
+
         app.pin1.set(layout[0])
         app.pin2.set(layout[1])
         app.pin3.set(layout[2])
-        app.transType.set(transType)
+        app.transType.set(transStructuur + " " + transType)
 
-        app.updatePlot(app.plot1, [1, 2, 3, 4, 5, 6, 7, 8, 9], app.hfe, "IC", "hfe")
-        app.updatePlot(app.plot2, app.I_C2, app.V_CE, "IC", "VCE")
-    
+        dataLen = 20
+        
+        if(transStructuur == "BJT"):
+            # Graph1: Beta in functie van I_C
+            app.I_C1 = np.zeros(dataLen)
+            app.Beta = np.zeros(dataLen)
 
-    print("Pressed start\t", app.hfe, app.V_CE)
-    kapot = random.randrange(0, 10)
-    transistorType = transistorTypes[0]
+            Transistor.meting_Beta_IC(app.I_C1, app.Beta, dataLen)
 
-    if (kapot < 9):
-        if (transistorType == "BJT NPN" or transistorType == "BJT PNP"):
-            print("BJT")
+            # Graph2: V_CE in functie van I_C
+            IB = 50e-3  # in mA
+            app.I_C2 = np.zeros(dataLen)
+            app.V_CE = np.zeros(dataLen)
+
+            Transistor.meting_IC_VCE(IB, app.I_C2, app.V_CE, dataLen)
+
+            # Graph3: V_CE in functie van I_C
+            VCB = 0.7  # in V
+            app.I_C3 = np.zeros(dataLen)
+            app.V_BE = np.zeros(dataLen)
+
+            Transistor.meting_IC_VBE(VCB, app.I_C3, app.V_BE, dataLen)
+
+            # Updaten plots
+            app.updatePlot(app.BJTplot1, app.I_C1, app.Beta, "IC", "Beta")
+            app.updatePlot(app.BJTplot2, app.I_C2, app.V_CE, "IC", "VCE")
+            app.updatePlot(app.BJTplot3, app.I_C3, app.V_BE, "IC", "VCE")
+
             controller.show_frame(InfoPageBJT)
-        else:
+
+        elif(transStructuur == "MOSFET"):
             controller.show_frame(InfoPageMOSFET)
-        app.transType.set(transistorType)
-    else:
-        controller.show_frame(DefectPage)
+
+        else:
+            controller.show_frame(DefectPage)
 
 
 class Transistortester(tk.Tk):
@@ -112,30 +90,38 @@ class Transistortester(tk.Tk):
     transType = 0
 
     """------------------------------    BJT     ------------------------------"""
-    V_BE = 0
 
     # Graph 1
-    hfe = np.zeros(9)
+    nameBJTGraph1 = "Beta in functie van IC"
+    Beta = np.zeros(9)
     I_C1 = np.zeros(9)
-    fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-    plot1 = fig1.add_subplot(111)
+    BJTfig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    BJTplot1 = BJTfig1.add_subplot(111)
 
     # Graph 2
+    nameBJTGraph2 = "IC in functie van VCE"
     V_CE = np.zeros(9)
     I_C2 = np.zeros(9)
-    fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-    plot2 = fig2.add_subplot(111)
+    BJTfig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    BJTplot2 = BJTfig2.add_subplot(111)
+
+    # Graph 3
+    nameBJTGraph3 = "IC in functie van VBE"
+    V_BE = np.zeros(9)
+    I_C3 = np.zeros(9)
+    BJTfig3 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    BJTplot3 = BJTfig3.add_subplot(111)
 
     """----------------------------     MOSFET     ----------------------------"""
     # Graph 1
-    # hfe = 9*[2]
-    # fig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-    # plot1 = fig1.add_subplot(111)
+    # Beta = 9*[2]
+    # MOSFETfig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    # MOSFETplot1 = MOSFETfig1.add_subplot(111)
 
     # Graph 2
     # V_CE = 9*[2]
-    # fig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-    # plot2 = fig2.add_subplot(111)
+    # MOSFETfig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    # MOSFETplot2 = MOSFETfig2.add_subplot(111)
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -160,7 +146,7 @@ class Transistortester(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, HelpPage, DefectPage, InfoPageBJT, InfoPageMOSFET, Graph1PageBJT, Graph2PageBJT):
+        for F in (StartPage, HelpPage, DefectPage, InfoPageBJT, InfoPageMOSFET, Graph1PageBJT, Graph2PageBJT, Graph3PageBJT):
             frame = F(self.canvas, self)
             self.frames[F] = frame
             frame.place(relx=0.05, rely=0.05, relwidth=0.9, relheight=0.9)
@@ -180,10 +166,7 @@ class Transistortester(tk.Tk):
         # Update alle grafieken
         Graph1PageBJT.updateGraph()
         Graph2PageBJT.updateGraph()
-
-    def getInfo(self):
-        Transistortester.V_CE = rand(1, 10, 9)  # Functie met gemeten waarden
-        Transistortester.hfe = rand(1, 10, 9)   # Functie met gemeten waarden
+        Graph3PageBJT.updateGraph()
 
 
 class StartPage(tk.Frame):
@@ -197,6 +180,7 @@ class StartPage(tk.Frame):
         style.configure('Main.TButton', font=('Verdana', 12))
 
         bStart = ttk.Button(self, text="Start", command=lambda: load(controller), style="Main.TButton")
+        # bStart = ttk.Button(self, text="Start", command=lambda: controller.show_frame(InfoPageBJT), style="Main.TButton")
         bStart.place(relx=0.4, rely=0.4, relwidth=0.2, relheight=0.1)
 
         bHelp = ttk.Button(self, text="Help", command=lambda: controller.show_frame(HelpPage), style="Main.TButton")
@@ -221,7 +205,7 @@ class HelpPage(tk.Frame):
                           font=NORMAL_FONT, anchor="center", background=MAIN_COLOR, justify=tk.LEFT)
         label.place(relx=0.1, rely=0.2, relwidth=0.8, relheight=0.2)
 
-        path = os.getcwd() + "/TransistorBreadboard.png"
+        path = os.path.abspath("TransistorBreadboard.png")
 
         img = Image.open(path)
         img = img.resize((int(0.5*HEIGHT - 0.05*HEIGHT), int(0.5*HEIGHT - 0.05*HEIGHT)), Image.ANTIALIAS)
@@ -261,14 +245,17 @@ class InfoPageBJT(tk.Frame):
         bBack = ttk.Button(self, text="Naar Start", command=lambda: controller.show_frame(StartPage), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        bGraph1 = ttk.Button(self, text="Current Gain", command=lambda: controller.show_frame(Graph1PageBJT), style="bGraph.TButton")
+        bGraph1 = ttk.Button(self, text=Transistortester.nameBJTGraph1, command=lambda: controller.show_frame(Graph1PageBJT), style="bGraph.TButton")
         bGraph1.place(relx=0.35, rely=0.6, relwidth=0.3, relheight=0.1)
 
-        bGraph2 = ttk.Button(self, text="Collector Saturation Region", command=lambda: controller.show_frame(Graph2PageBJT), style="bGraph.TButton")
+        bGraph2 = ttk.Button(self, text=Transistortester.nameBJTGraph2, command=lambda: controller.show_frame(Graph2PageBJT), style="bGraph.TButton")
         bGraph2.place(relx=0.35, rely=0.7, relwidth=0.3, relheight=0.1)
 
+        bGraph3 = ttk.Button(self, text=Transistortester.nameBJTGraph3, command=lambda: controller.show_frame(Graph3PageBJT), style="bGraph.TButton")
+        bGraph3.place(relx=0.35, rely=0.8, relwidth=0.3, relheight=0.1)
+
         frame = tk.Frame(self, bg=ACCENT_COLOR)
-        frame.place(relx=0.25, rely=0.15, relwidth=0.5, relheight=0.4)
+        frame.place(relx=0.25, rely=0.15, relwidth=0.5, relheight=0.3)
 
         # Type transistor
         label = ttk.Label(self, text="Type trasistor:", font=NORMAL_FONT, background=ACCENT_COLOR)
@@ -290,13 +277,6 @@ class InfoPageBJT(tk.Frame):
         label = ttk.Label(self, textvariable=Transistortester.pin3, font=NORMAL_FONT, anchor="center", background="white")
         label.place(relx=0.66, rely=0.31, relwidth=0.04, relheight=0.08)
 
-        # V_BE
-        label = ttk.Label(self, text="V_BE:", font=NORMAL_FONT, background=ACCENT_COLOR)
-        label.place(relx=0.3, rely=0.4, relwidth=0.2, relheight=0.1)
-
-        label = ttk.Label(self, textvariable=Transistortester.V_BE, font=NORMAL_FONT, anchor="center", background="white")
-        label.place(relx=0.55, rely=0.41, relwidth=0.15, relheight=0.08)
-
 
 class InfoPageMOSFET(tk.Frame):
 
@@ -317,7 +297,7 @@ class InfoPageMOSFET(tk.Frame):
         bGraph2.place(relx=0.35, rely=0.7, relwidth=0.3, relheight=0.1)
 
         frame = tk.Frame(self, bg=ACCENT_COLOR)
-        frame.place(relx=0.1, rely=0.15, relwidth=0.8, relheight=0.4)
+        frame.place(relx=0.1, rely=0.15, relwidth=0.8, relheight=0.3)
 
         # Type transistor
         label = ttk.Label(self, text="Type trasistor:", font=NORMAL_FONT, background=ACCENT_COLOR)
@@ -339,15 +319,8 @@ class InfoPageMOSFET(tk.Frame):
         label = ttk.Label(self, textvariable=Transistortester.pin3, font=NORMAL_FONT, anchor="center", background="white")
         label.place(relx=0.76, rely=0.31, relwidth=0.09, relheight=0.08)
 
-        # V_BE
-        label = ttk.Label(self, text="V_BE:", font=NORMAL_FONT, background=ACCENT_COLOR)
-        label.place(relx=0.15, rely=0.4, relwidth=0.2, relheight=0.1)
 
-        label = ttk.Label(self, text="0.635 V", font=NORMAL_FONT, anchor="center", background="white")
-        label.place(relx=0.4, rely=0.41, relwidth=0.45, relheight=0.08)
-
-
-# Current gain (bèta/hfe in functie van I_C)
+# Beta in functie van I_C
 class Graph1PageBJT(tk.Frame):
     canvas = 0
 
@@ -357,7 +330,7 @@ class Graph1PageBJT(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        Graph1PageBJT.canvas = FigureCanvasTkAgg(Transistortester.fig1, self)
+        Graph1PageBJT.canvas = FigureCanvasTkAgg(Transistortester.BJTfig1, self)
         Graph1PageBJT.canvas.draw()
 
         toolbar = NavigationToolbar2Tk(Graph1PageBJT.canvas, self)
@@ -367,21 +340,21 @@ class Graph1PageBJT(tk.Frame):
 
         Graph1PageBJT.canvas.get_tk_widget().pack()
 
-        label = ttk.Label(self, text="Current gain", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
+        label = ttk.Label(self, text=Transistortester.nameBJTGraph1, font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
 
         bBack = ttk.Button(self, text="Terug", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9],
-                                                                                 Transistortester.hfe, "I_C", "hfe", "CurrentGain.csv"), style="bBack.TButton")
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV(Transistortester.I_C1,
+                                                                                 Transistortester.Beta, "I_C", "Beta", "Beta_IC.csv"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
     def updateGraph():
         Graph1PageBJT.canvas.draw()
 
 
-# Collector saturatie regio (I_C in functie van V_CE)
+# I_C in functie van V_CE
 class Graph2PageBJT(tk.Frame):
     canvas = 0
 
@@ -391,7 +364,7 @@ class Graph2PageBJT(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        Graph2PageBJT.canvas = FigureCanvasTkAgg(Transistortester.fig2, self)
+        Graph2PageBJT.canvas = FigureCanvasTkAgg(Transistortester.BJTfig2, self)
         Graph2PageBJT.canvas.draw()
 
         toolbar = NavigationToolbar2Tk(Graph2PageBJT.canvas, self)
@@ -401,18 +374,52 @@ class Graph2PageBJT(tk.Frame):
 
         Graph2PageBJT.canvas.get_tk_widget().pack()
 
-        label = ttk.Label(self, text="Collector saturation region", font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
+        label = ttk.Label(self, text=Transistortester.nameBJTGraph2, font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
         label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
 
         bBack = ttk.Button(self, text="Terug", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
         bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
 
-        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV([1, 2, 3, 4, 5, 6, 7, 8, 9],
-                                                                                 Transistortester.V_CE, "I_C", "V_CE", "CollectorSaturationRegion.csv"), style="bBack.TButton")
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV(Transistortester.V_CE,
+                                                                                 Transistortester.I_C2, "V_CE", "I_C", "IC_VCE.csv"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
     def updateGraph():
         Graph2PageBJT.canvas.draw()
+
+
+# I_C in functie van V_BE
+class Graph3PageBJT(tk.Frame):
+    canvas = 0
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        style = ttk.Style()
+        style.configure('bBack.TButton', font=('Verdana', 10))
+
+        Graph3PageBJT.canvas = FigureCanvasTkAgg(Transistortester.BJTfig2, self)
+        Graph3PageBJT.canvas.draw()
+
+        toolbar = NavigationToolbar2Tk(Graph3PageBJT.canvas, self)
+        toolbar.configure(bg=ACCENT_COLOR)
+        toolbar._message_label.config(background=ACCENT_COLOR)
+        toolbar.update()
+
+        Graph3PageBJT.canvas.get_tk_widget().pack()
+
+        label = ttk.Label(self, text=Transistortester.nameBJTGraph3, font=LARGE_FONT, anchor="center", background=MAIN_COLOR)
+        label.place(relx=0, rely=0, relwidth=1, relheight=0.1)
+
+        bBack = ttk.Button(self, text="Terug", command=lambda: controller.show_frame(InfoPageBJT), style="bBack.TButton")
+        bBack.place(relx=0, rely=0, relwidth=0.15, relheight=0.1)
+
+        bCSV = ttk.Button(self, text="Save CSV", command=lambda: saveCSV.saveCSV(Transistortester.V_BE,
+                                                                                 Transistortester.I_C3, "V_BE", "I_C", "IC_VBE.csv"), style="bBack.TButton")
+        bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
+
+    def updateGraph():
+        Graph3PageBJT.canvas.draw()
 
 
 app = Transistortester()
