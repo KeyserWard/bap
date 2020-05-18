@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 import random
 import numpy as np
+import os
 import csv
 from cffi import FFI
 
@@ -19,9 +20,21 @@ import saveCSV
 import Transistor
 
 # Importeren C-bestanden en maken van transistor struct
+TransistorStruct = Transistor.getStructTransistor()
 ffi = FFI()
-ffi.cdef("void meting_IC_VCE(Transistor*, double, double*, double*, int);")
-metingenTransistor = ffi.dlopen(os.getcwd() + "/metingenTransistor.so")
+ffi.cdef(
+    """
+    typedef struct {
+        int basisGateChannel;
+        int collectorDrainChannel;
+        int emitterSourceChannel;
+        char* type;		//pnp of npn
+        char* structuur; //MOSFET of BJT
+    } Transistor;
+    void meting_IC_VCE(Transistor*, double, double*, double*, int);
+    """
+)
+metingenTransistor = ffi.dlopen(os.getcwd() + "/TransistorMetingen.so")
 TransistorStruct = Transistor.getStructTransistor()
 
 
