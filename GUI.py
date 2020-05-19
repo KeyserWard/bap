@@ -72,9 +72,10 @@ def load(controller):
             Transistor.meting_IC_VBE(VCB, app.I_C3, app.V_BE, dataLen)
 
             # Updaten plots
-            app.updatePlot(app.BJTplot1, app.I_C1, app.Beta, "IC", "Beta")
-            app.updatePlot(app.BJTplot2, app.I_C2, app.V_CE, "IC", "VCE")
-            app.updatePlot(app.BJTplot3, app.I_C3, app.V_BE, "IC", "VCE")
+            app.update_plot(Graph1PageBJT, app.I_C1, app.Beta, "IC", "Beta")
+            app.update_plot(Graph2PageBJT, app.I_C2, app.V_CE, "IC", "VCE")
+            app.update_plot(Graph3PageBJT, app.I_C3, app.V_BE, "IC", "VCE")
+
             print(app.I_C1)
             print(app.I_C2)
             print(app.I_C3)
@@ -101,22 +102,16 @@ class Transistortester(tk.Tk):
     nameBJTGraph1 = "Beta in functie van IC"
     Beta = np.zeros(9)
     I_C1 = np.zeros(9)
-    BJTfig1 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-    BJTplot1 = BJTfig1.add_subplot(111)
 
     # Graph 2
     nameBJTGraph2 = "IC in functie van VCE"
     V_CE = np.zeros(9)
     I_C2 = np.zeros(9)
-    BJTfig2 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-    BJTplot2 = BJTfig2.add_subplot(111)
 
     # Graph 3
     nameBJTGraph3 = "IC in functie van VBE"
     V_BE = np.zeros(9)
     I_C3 = np.zeros(9)
-    BJTfig3 = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
-    BJTplot3 = BJTfig3.add_subplot(111)
 
     """----------------------------     MOSFET     ----------------------------"""
     # Graph 1
@@ -161,17 +156,13 @@ class Transistortester(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-    def updatePlot(self, plot, x, y, xlabel, ylabel):
-        plot.clear()
-        plot.plot(x, y)
-        plot.set_xlabel(xlabel)
-        plot.set_ylabel(ylabel)
-
-        # Update alle grafieken
-        Graph1PageBJT.updateGraph()
-        Graph2PageBJT.updateGraph()
-        Graph3PageBJT.updateGraph()
-
+    def update_plot(self, graph, x, y, xlabel, ylabel):
+        self.frames[graph].plot.clear()
+        self.frames[graph].plot.plot(x, y)
+        self.frames[graph].plot.set_xlabel(xlabel)
+        self.frames[graph].plot.set_ylabel(ylabel)
+        
+        self.frames[graph].update_graph()
 
 
 class StartPage(tk.Frame):
@@ -328,6 +319,8 @@ class InfoPageMOSFET(tk.Frame):
 # Beta in functie van I_C
 class Graph1PageBJT(tk.Frame):
     canvas = 0
+    fig = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    plot = fig.add_subplot(111)
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -335,7 +328,8 @@ class Graph1PageBJT(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        Graph1PageBJT.canvas = FigureCanvasTkAgg(Transistortester.BJTfig1, self)
+        # Graph1PageBJT.canvas = FigureCanvasTkAgg(Transistortester.BJTfig1, self)
+        Graph1PageBJT.canvas = FigureCanvasTkAgg(Graph1PageBJT.fig, self)
         Graph1PageBJT.canvas.draw()
 
         toolbar = NavigationToolbar2Tk(Graph1PageBJT.canvas, self)
@@ -355,13 +349,15 @@ class Graph1PageBJT(tk.Frame):
                                                                                  Transistortester.Beta, "I_C", "Beta", "Beta_IC.csv"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
-    def updateGraph():
+    def update_graph(self):
         Graph1PageBJT.canvas.draw()
 
 
 # I_C in functie van V_CE
 class Graph2PageBJT(tk.Frame):
     canvas = 0
+    fig = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    plot = fig.add_subplot(111)
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -369,7 +365,8 @@ class Graph2PageBJT(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        Graph2PageBJT.canvas = FigureCanvasTkAgg(Transistortester.BJTfig2, self)
+        # Graph2PageBJT.canvas = FigureCanvasTkAgg(Transistortester.BJTfig2, self)
+        Graph2PageBJT.canvas = FigureCanvasTkAgg(Graph2PageBJT.fig, self)
         Graph2PageBJT.canvas.draw()
 
         toolbar = NavigationToolbar2Tk(Graph2PageBJT.canvas, self)
@@ -389,12 +386,14 @@ class Graph2PageBJT(tk.Frame):
                                                                                  Transistortester.I_C2, "V_CE", "I_C", "IC_VCE.csv"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
-    def updateGraph():
+    def update_graph(self):
         Graph2PageBJT.canvas.draw()
 
 # I_C in functie van V_BE
 class Graph3PageBJT(tk.Frame):
     canvas = 0
+    fig = Figure(figsize=(10, 8), dpi=100, facecolor=MAIN_COLOR)
+    plot = fig.add_subplot(111)
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -402,7 +401,8 @@ class Graph3PageBJT(tk.Frame):
         style = ttk.Style()
         style.configure('bBack.TButton', font=('Verdana', 10))
 
-        Graph3PageBJT.canvas = FigureCanvasTkAgg(Transistortester.BJTfig2, self)
+        # Graph3PageBJT.canvas = FigureCanvasTkAgg(Transistortester.BJTfig3, self)
+        Graph3PageBJT.canvas = FigureCanvasTkAgg(Graph3PageBJT.fig, self)
         Graph3PageBJT.canvas.draw()
 
         toolbar = NavigationToolbar2Tk(Graph3PageBJT.canvas, self)
@@ -422,7 +422,7 @@ class Graph3PageBJT(tk.Frame):
                                                                                  Transistortester.I_C3, "V_BE", "I_C", "IC_VBE.csv"), style="bBack.TButton")
         bCSV.place(relx=0.85, rely=0, relwidth=0.15, relheight=0.1)
 
-    def updateGraph():
+    def update_graph(self):
         Graph3PageBJT.canvas.draw()
 
 
