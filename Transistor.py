@@ -56,19 +56,6 @@ class Transistor:
                 self.layout[Transistor.collectorDrainChannel] = "D"
                 self.layout[Transistor.emitterSourceChannel] = "S"
 
-
-    def isDefect(self):
-        return self.defect
-
-    def getPinLayout(self):
-        return self.layout
-
-    def getType(self):
-        return self.type
-
-    def getStructuur(self):
-        return self.structuur
-
     def meting_Beta_IC(self, data_IC, data_Beta, dataLen):
         C_IC = self.ffi.cast("double *", (data_IC).ctypes.data)
         C_Beta = self.ffi.cast("double *", (data_Beta).ctypes.data)

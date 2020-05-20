@@ -26,35 +26,25 @@ MAIN_COLOR = "#e6f8ff"
 ACCENT_COLOR = "#ffeec2"
 HEIGHT = 480
 WIDTH = 800
-X = np.zeros(10)
-Y = np.zeros(10)
 
 
 def load(controller):
-    global X, Y
     trans = Transistor.Transistor()
-    print(trans.isDefect())
 
-    if(trans.isDefect()):
+    if(trans.defect):
         controller.show_frame(DefectPage)
 
     else:
         # Pinlayout
-        layout = trans.getPinLayout()
-        
-        app.pin1.set(layout[0])
-        app.pin2.set(layout[1])
-        app.pin3.set(layout[2])
+        app.pin1.set(trans.layout[0])
+        app.pin2.set(trans.layout[1])
+        app.pin3.set(trans.layout[2])
 
         # Bepalen transistortype
-        transStructuur = trans.getStructuur()
-        transType = trans.getType()
-        
-        app.transType.set(transStructuur + " " + transType)
+        app.transType.set(trans.structuur + " " + trans.type)
 
         dataLen = 20
-        
-        if(transStructuur == "BJT"):
+        if(trans.structuur == "BJT"):
             # Graph1: Beta in functie van I_C
             app.I_C1.resize(dataLen)
             app.Beta.resize(dataLen)
@@ -165,7 +155,7 @@ class Transistortester(tk.Tk):
         self.frames[graph].plot.plot(x, y)
         self.frames[graph].plot.set_xlabel(xlabel)
         self.frames[graph].plot.set_ylabel(ylabel)
-        
+
         self.frames[graph].update_graph()
 
 
@@ -392,6 +382,7 @@ class Graph2PageBJT(tk.Frame):
 
     def update_graph(self):
         Graph2PageBJT.canvas.draw()
+
 
 # I_C in functie van V_BE
 class Graph3PageBJT(tk.Frame):
