@@ -32,20 +32,24 @@ Y = np.zeros(10)
 
 def load(controller):
     global X, Y
-    # Pinlayout
-    layout = Transistor.getPinLayout()
+    trans = Transistor.Transistor()
+    print(trans.isDefect())
 
-    if(None in layout):
+    if(trans.isDefect()):
         controller.show_frame(DefectPage)
 
     else:
-        # Bepalen transistortype
-        transType = Transistor.getType()
-        transStructuur = Transistor.getStructuur()
-
+        # Pinlayout
+        layout = trans.getPinLayout()
+        
         app.pin1.set(layout[0])
         app.pin2.set(layout[1])
         app.pin3.set(layout[2])
+
+        # Bepalen transistortype
+        transStructuur = trans.getStructuur()
+        transType = trans.getType()
+        
         app.transType.set(transStructuur + " " + transType)
 
         dataLen = 20
@@ -55,21 +59,21 @@ def load(controller):
             app.I_C1.resize(dataLen)
             app.Beta.resize(dataLen)
 
-            Transistor.meting_Beta_IC(app.I_C1, app.Beta, dataLen)
+            trans.meting_Beta_IC(app.I_C1, app.Beta, dataLen)
 
             # Graph2: V_CE in functie van I_C
             IB = 50e-3  # in mA
             app.I_C2.resize(dataLen)
             app.V_CE.resize(dataLen)
 
-            Transistor.meting_IC_VCE(IB, app.I_C2, app.V_CE, dataLen)
+            trans.meting_IC_VCE(IB, app.I_C2, app.V_CE, dataLen)
 
             # Graph3: V_CE in functie van I_C
             VCB = 0.7  # in V
             app.I_C3.resize(dataLen)
             app.V_BE.resize(dataLen)
 
-            Transistor.meting_IC_VBE(VCB, app.I_C3, app.V_BE, dataLen)
+            trans.meting_IC_VBE(VCB, app.I_C3, app.V_BE, dataLen)
 
             # Updaten plots
             app.update_plot(Graph1PageBJT, app.I_C1, app.Beta, "IC", "Beta")
