@@ -5,7 +5,7 @@
 
 bool chose_config(const char* configuratie, int channel) {	// returnt true als de cofiguratie correct is doorgegeven
 	if(!strcmp(configuratie, "Open")) {				
-		set_switch(channel, true);
+		set_switch(channel, false);
 		set_dac_voltage_offset(channel, 0);		//Ground = 5V
 		return true;
 	} 		
@@ -37,7 +37,7 @@ bool locate_base(Transistor* trans) {
 	const int permuLijst1[6] = {1, 2, 0, 2, 0, 1};
 	const int permuLijst2[6] = {2, 1, 2, 0, 1, 0};
 	int metingLijst[6][3];					//{{b0, b1, b2}{b1, e1, c1}...}
-	int i=0, j=0;
+	int i=0, j=0, w=0;
 	bool eersteInGevonden = false;
 	bool eersteUitGevonden = false;
 	int inBewaar, uitBewaar;
@@ -59,8 +59,7 @@ bool locate_base(Transistor* trans) {
 		
 		i++;
 		j = i/2;
-		//mogelijks een wachtlus nodig zodat de meting niet verstoord wordt
-		int w;
+		
 		for(w=0;w<1000;w++){}
 		
 	}
@@ -138,15 +137,4 @@ void locate_collector_emitter(Transistor* transistor){
 	}
 	
 }
-/*
-int main(int argc, char **argv) {
-	setup_hardware();
-	
-	Transistor T;
-	locate_base(&T);
-	locate_collector_emitter(&T);
-	if (DEBUG) {printf("%s transistor, basis at pin %d\n",T.type, T.basisGateChannel);}
-	if (DEBUG) {printf("\tcollecter at pin %d\n\temitter at pin %d\n", T.collectorDrainChannel, T.emitterSourceChannel);}
 
-}
-*/
