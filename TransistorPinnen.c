@@ -126,7 +126,7 @@ void locate_collector_emitter(Transistor* transistor){
 	chose_config("Ground", channels[collectorIndex]);		
 	chose_config("Vcc", channels[emitterIndex]);		
 	
-	if((meting >  get_current(channels[emitterIndex])) && (strcmp(transistor->type,"NPN") || meting >  get_current(channels[emitterIndex])) && (strcmp(transistor->type,"PNP"))) {
+	if((meting >  get_current(channels[emitterIndex])) && !(strcmp(transistor->type,"NPN")) || (meting >  get_current(channels[emitterIndex])) && !(strcmp(transistor->type,"PNP"))) {
 		//de 2 GES met elkaar vergelijken
 		transistor->collectorDrainChannel = channels[collectorIndex];		//GES in eerste situatie
 		transistor->emitterSourceChannel = channels[emitterIndex];	
