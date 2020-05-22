@@ -14,7 +14,7 @@ double meting_VBE(Transistor *trans, double VB, int RB) {
 
 void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_VCE, int dataLen)
 					//IB in mA
-{					//dataLen zijn het aantal coordinaten, double data[dataLen][2]
+{					//dataLen is het aantal meetpunten
 	double VCE, IC; //VCE kan niet groter worden dan 4!
 	double RB, VB, VBE, ib;
 	int w, i;
@@ -47,7 +47,7 @@ void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_V
 	
 	//weerstanden instellen
 	set_digipot_resistance(trans->collectorDrainChannel, 500); //bij VCE = 4V mag I max = 5mA => R moet minimaal 800ohm zijn
-	set_digipot_resistance(trans->emitterSourceChannel, 500);  //moet dit?
+	set_digipot_resistance(trans->emitterSourceChannel, 500);  
 	
 	set_dac_voltage_offset(trans->emitterSourceChannel, 0);
 		
@@ -116,18 +116,6 @@ void meting_Beta_IC(Transistor *trans, double *data_IC, double *data_beta, int d
 			set_digipot_resistance(trans->basisGateChannel, RB);
 			set_digipot_resistance(trans->emitterSourceChannel, RC);
 			
-			/*
-			if (fabs(Ic) > 0 && fabs(Ic) <= 2)
-			{
-				VCE = 2 * Ic;								//VCE is max 4V
-				set_digipot_resistance(trans->collectorDrainChannel, 2000);
-			}
-			else if (fabs(Ic) > 2 && fabs(Ic) <= 4)
-			{
-				VCE = 1 * Ic;								//VCE is max 4V
-				set_digipot_resistance(trans->collectorDrainChannel, 1000);
-			}
-			*/
 			set_dac_voltage_offset(trans->collectorDrainChannel, VCE);
 			set_dac_voltage_offset(trans->basisGateChannel, VCE);
 			set_dac_voltage_offset(trans->emitterSourceChannel, 0);
