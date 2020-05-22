@@ -1,5 +1,5 @@
 //aansturing pinnen & SPI
-#include "TransistorTester.h"
+#include "TransistorTester_V3.1.h"
 
 bool startUp = 0;
 
@@ -87,7 +87,6 @@ int set_dac_value(unsigned char channel, int value) {
 //params: int channel(1-4,ALL), double value(0V-10V)
 //return: bool error
 double set_dac_voltage(int channel, double voltage) {	
-	//if (DEBUG) {printf("set DAC channel %d to %fV\n", channel, voltage);}	
 	double value = voltage * 4096 / 2 / 5;
 
 	set_dac_value(channel, value);
@@ -98,14 +97,13 @@ double set_dac_voltage(int channel, double voltage) {
 //params: int channel(1-4,ALL), double value(-5Vtot+5V)
 //return: bool error
 double set_dac_voltage_offset(int channel, double voltage) {	
-	//if (DEBUG) {printf("set DAC offset channel %d to %fV\n", channel, voltage);}	
 	double value = (voltage + 5);
 	value = set_dac_voltage(channel, value);
 	
 	return value;						//afrondingsfouten voorkomen
 }
 
-//get value from dac
+//get value from adc
 //params: int channel(1-4,ALL), bool testpunt: hoog zetten als je de spanning op de DUT wil meten 
 //			& laag voor diff over de digipot (standaard)
 //return: integer value(0-1023)
@@ -143,7 +141,7 @@ int get_adc_value(int channel, bool testpunt) {
 	return value;
 }
 
-//get voltage from dac
+//get voltage from adc
 //params: int channel(1-4,ALL), bool testpunt: hoog zetten als je de spanning op de DUT wil meten 
 //			& laag voor diff over de digipot (standaard)
 //return: double value(0V-10V)
@@ -156,14 +154,10 @@ double get_adc_voltage(int channel, bool testpunt) {
 		voltage = voltage * 20 / 4096;
 	}
 	
-	if (DEBUG) {
-		//if (testpunt == 1) {printf("ADC DUT %d voltage returned %fV\n", channel, voltage);}
-		//if (testpunt) {printf("ADC channel %d voltage returned %fV\n", channel, voltage);}
-	}
 	return voltage;
 }
 
-//get current from dac
+//get current from adc
 //params: int channel(1-4,ALL)
 //return: double cuurent
 double get_current(int channel) {
@@ -193,7 +187,8 @@ int set_digipot(int channel, unsigned char value) {
 int set_digipot_resistance(int channel, int R) {
 	bool e = 1;
 	double value = (R - 3*50) * 256 / 10000;
-	if(R > 10150) { value = 256; }
+	if(R > 10150) { value = 255; }
+	else if (R < 0) { value = 0; }
 	e &= set_digipot(channel, (unsigned char)value);
 
 	if(!e) { return -1; }
@@ -266,56 +261,3 @@ bool setup_hardware() {
 
 	return 1;
 }
-
-
-/*
-int main(int argc, char **argv) {
-	setup_hardware();
-
-	while(1){
-		//test digipots
-		
-		set_digipot(CHANNEL1, 255);
-		set_digipot(CHANNEL2, 255);
-		set_digipot(CHANNEL3, 255);
-
-		//delay(100);
-		
-		
-		//test switch
-		
-		set_switch(CHANNEL1, TRUE);
-		set_switch(CHANNEL2, TRUE);
-		set_switch(CHANNEL3, TRUE);
-		
-		delay(2500);
-		set_switch(CHANNEL1, FALSE);
-		set_switch(CHANNEL2, FALSE);
-		set_switch(CHANNEL3, FALSE);
-		delay(2500);
-		
-		
-		//test DAC
-		
-		set_dac_value(CHANNEL1, 3072);
-		set_dac_value(CHANNEL2, 2048);
-		set_dac_value(CHANNEL3, 1024);
-		
-		
-		//test ADC
-		
-		get_adc_voltage(CHANNEL1, FALSE);
-		get_adc_voltage(CHANNEL2, FALSE);
-		get_adc_voltage(CHANNEL3, FALSE);
-		get_adc_voltage(CHANNEL1, TRUE);
-		get_adc_voltage(CHANNEL2, TRUE);
-		get_adc_voltage(CHANNEL3, TRUE);
-		get_current(CHANNEL1);
-		get_current(CHANNEL2);
-		get_current(CHANNEL3);
-		delay(250);
-		
-	}
-}
-*/
-
