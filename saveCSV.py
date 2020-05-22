@@ -21,6 +21,6 @@ def saveCSV(x, y, xTitle, yTitle, filename):
         if(datafile is not None):
             datacsv = xTitle + ";" + yTitle + "\n"
             for i in range(len(x)):
-                datacsv += "{:.2f}".format(x[i]) + ";" + "{:.2f}".format(y[i]) + "\n"
+                datacsv += "{:.6f}".format(x[i]) + ";" + "{:.6f}".format(y[i]) + "\n"
             datafile.write(datacsv)
             datafile.close()
