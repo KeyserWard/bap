@@ -66,9 +66,9 @@ def load(controller):
             trans.meting_IC_VBE(VCB, app.I_C3, app.V_BE, dataLen)
 
             # Updaten plots
-            app.update_plot(Graph1PageBJT, app.I_C1, app.Beta, "IC", "Beta")
-            app.update_plot(Graph2PageBJT, app.I_C2, app.V_CE, "IC", "VCE")
-            app.update_plot(Graph3PageBJT, app.I_C3, app.V_BE, "IC", "VCE")
+            app.update_plot(Graph1PageBJT, app.I_C1, app.Beta, "IC", "Beta", "Beta in functie van IC")
+            app.update_plot(Graph2PageBJT, app.V_CE, app.I_C2, "VCE", "IC", ("IB = {}µA").format(IB*1000))
+            app.update_plot(Graph3PageBJT, app.V_BE, app.I_C3, "VCE", "IC", ("VCB = {}V").format(VCB))
 
             print(app.I_C1)
             print(app.I_C2)
@@ -155,6 +155,8 @@ class Transistortester(tk.Tk):
         self.frames[graph].plot.plot(x, y)
         self.frames[graph].plot.set_xlabel(xlabel)
         self.frames[graph].plot.set_ylabel(ylabel)
+
+        self.frames[graph].plot.legend(loc='lower right', fancybox=True, shadow=True)
 
         self.frames[graph].update_graph()
 
