@@ -55,12 +55,10 @@ void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_V
 	for (i = 0; i < dataLen; i++)
 	{
 		VCE = (double)(i * 4) / dataLen;		
-		
 		//VCE inverteren als de bjt een pnp is
 		if (!strcmp(trans->type, "PNP")) { VCE *= -1; }
-		
-		//IC in mA (RE + RC = 4KOhm)
-		IC = VCE / 1.000; //??
+	
+		IC = VCE / 1.000; 	//IC in mA (RE + RC = 4KOhm)
 		
 		if (fabs(IC) <= 5)	//beveiliging (theoretisch)
 		{ // -5 <= IC <= 5
