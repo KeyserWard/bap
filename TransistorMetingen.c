@@ -66,16 +66,15 @@ void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_V
 		{ // -5 <= IC <= 5
 			set_dac_voltage_offset(trans->collectorDrainChannel, VCE);	
 			
-			
 			for(w=0;w<1000000;w++){}
-			
+	
 			//IB controleren
 			ib = get_current(trans->basisGateChannel);
 			printf("IB = %fmA\t",ib*1000);
 
-			
 			//IC opmeten
-			data_VCE[i] = (double)get_adc_voltage(trans->collectorDrainChannel, 1) - get_adc_voltage(trans->emitterSourceChannel, 1); //VCE controle
+			data_VCE[i] = (double)get_adc_voltage(trans->collectorDrainChannel, 1)
+				- get_adc_voltage(trans->emitterSourceChannel, 1); //VCE controle
 			data_IC[i] = (double)get_current(trans->collectorDrainChannel);	
 			printf("VCE = %fV\n",data_VCE[i]);
 		}
@@ -88,7 +87,7 @@ void meting_IC_VCE(Transistor *trans, double IB, double *data_IC, double *data_V
 }
 
 void meting_Beta_IC(Transistor *trans, double *data_IC, double *data_beta, int dataLen)
-{ //dataLen zijn het aantal coordinaten, double data[dataLen][2]
+{ 
 	int RC, RB, VCE, i, w;
 	double Ic; //Ic in mA
 	VCE = 4;
